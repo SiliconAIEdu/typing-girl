@@ -1,0 +1,12 @@
+{
+  "tool": "built-in image_gen",
+  "date": "2026-11-17",
+  "asset": "typing-hand-left.png",
+  "transparent": true,
+  "prompt": "Use case: scientific-educational. Asset type: a polished transparent cutout illustration for a children's touch-typing web game, replacing a crude mitten-like hand diagram. Draw ONE anatomically believable LEFT HUMAN HAND, dorsal/back-of-hand view from overhead, thumb on the image RIGHT, fingers pointing toward the top. Exactly five digits. The hand is poised loosely over an imaginary keyboard: fingers gently curved/relaxed, not spread in a high-five, not clenched; all four fingernails visible and each finger visually distinguishable. Middle finger longest, ring and index slightly shorter, little finger visibly shorter, natural tapered fingertips and knuckles, subtle tendons and correct thumb web and thenar volume. Graceful natural proportions, not fashion-extreme, not plastic cylinders, no long manicure. Soft contemporary editorial painted illustration with dimensional shading, warm peach skin, softly rounded highlights, understated warm grey contour, pale cream knit sleeve covering the lower wrist with a complete neat rounded hem. All fingertips, thumb and sleeve included, nothing cropped. Clean simple silhouette and restrained detail that reads at 180 pixels tall. No rings, jewelry, nail polish, keyboard, text, letters, arrows, labels, floating finger pieces, drop shadow, border, or background. A single isolated left hand centered on a fully transparent canvas, occupying roughly 82% of image height. Matte, elegant, quiet, warm and realistic, matching a minimal blush-and-white educational interface.",
+  "usage": "Original left hand, mirrored at render time for right hand. Finger indicators are separate SVG overlays; this is a finger-identification guide, not an exact wrist-posture diagram.",
+  "references": [
+    "https://www.proko.com/course-lesson/how-to-draw-hand-bones-anatomy-for-artists",
+    "https://www.adobe.com/uk/creativecloud/illustration/discover/how-to-draw-hands.html"
+  ]
+}
