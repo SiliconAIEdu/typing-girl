@@ -1,0 +1,16 @@
+{
+  "name": "luna-and-keys",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "content": "node scripts/sync-curriculum.mjs",
+    "dev": "node scripts/sync-curriculum.mjs && node scripts/serve.mjs",
+    "test": "node scripts/sync-curriculum.mjs && node --test tests/*.test.mjs",
+    "build": "node scripts/sync-curriculum.mjs && node scripts/build.mjs",
+    "deploy": "npm test && npm run build && node scripts/publish-pages.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
