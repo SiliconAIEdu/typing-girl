@@ -1,44 +1,111 @@
 // Optional authoring tool; the shipped game needs no model, API key, or npm packages.
 import fs from 'node:fs';
 import path from 'node:path';
-import {createHash} from 'node:crypto';
-import {createRequire} from 'node:module';
-import {fileURLToPath,pathToFileURL} from 'node:url';
-import {execFileSync} from 'node:child_process';
-import {heartTexts} from './heart-catalog.mjs';
-const root=fileURLToPath(new URL('../',import.meta.url));
-const require=createRequire(path.join(process.env.HEART_TOOL_DIR||path.join(root,'scripts/audio'),'package.json'));
-const {KokoroTTS}=await import(pathToFileURL(require.resolve('kokoro-js')).href);
-const ffmpeg=require('ffmpeg-static');
-const tts=await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX',{dtype:'q8',device:'cpu',progress_callback:p=>{if(p.status==='ready'||p.status==='done')console.log(p.status,p.file||'model');}});
-const output=path.join(root,'public/audio/heart');fs.mkdirSync(output,{recursive:true});
-const texts=heartTexts(),manifest={};let n=0;
-const shard=Number(process.env.HEART_SHARD||0),shards=Number(process.env.HEART_SHARDS||1);
-for(const [index,text] of texts.entries()){
- const id=createHash('sha256').update(text).digest('hex').slice(0,20),file=path.join(output,id+'.mp3');
- manifest[text]=id+'.mp3';
- if(index%shards!==shard)continue;
- if(!fs.existsSync(file)){
-  // Spell uppercase single-letter prompts as letter names, not indefinite articles.
-  const letterNames={A:'ay',B:'bee',C:'see',D:'dee',E:'ee',F:'eff',G:'gee',H:'aitch',I:'eye',J:'jay',K:'kay',L:'ell',M:'em',N:'en',O:'oh',P:'pee',Q:'cue',R:'ar',S:'ess',T:'tee',U:'you',V:'vee',W:'double you',X:'ex',Y:'why',Z:'zee'};
-  const speech=letterNames[text]||text;
-  const wav=path.join(output,id+'.wav');
-  if(!fs.existsSync(wav)){
-  const audio=await tts.generate(speech,{voice:'af_heart',speed:1});
-  if(!audio.audio?.length||!audio.audio.some(v=>Math.abs(v)>.005))throw Error('Silent output: '+text);
-  await audio.save(wav+'.tmp');fs.renameSync(wav+'.tmp',wav);
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { heartTexts } from './heart-catalog.mjs';
+const root = fileURLToPath(new URL('../', import.meta.url));
+const require = createRequire(
+  path.join(process.env.HEART_TOOL_DIR || path.join(root, 'scripts/audio'), 'package.json'),
+);
+const { KokoroTTS } = await import(pathToFileURL(require.resolve('kokoro-js')).href);
+const ffmpeg = require('ffmpeg-static');
+const tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+  dtype: 'q8',
+  device: 'cpu',
+  progress_callback: p => {
+    if (p.status === 'ready' || p.status === 'done') console.log(p.status, p.file || 'model');
+  },
+});
+const output = path.join(root, 'public/audio/heart');
+fs.mkdirSync(output, { recursive: true });
+const texts = heartTexts(),
+  manifest = {};
+let n = 0;
+const shard = Number(process.env.HEART_SHARD || 0),
+  shards = Number(process.env.HEART_SHARDS || 1);
+for (const [index, text] of texts.entries()) {
+  const id = createHash('sha256').update(text).digest('hex').slice(0, 20),
+    file = path.join(output, id + '.mp3');
+  manifest[text] = id + '.mp3';
+  if (index % shards !== shard) continue;
+  if (!fs.existsSync(file)) {
+    // Spell uppercase single-letter prompts as letter names, not indefinite articles.
+    const letterNames = {
+      A: 'ay',
+      B: 'bee',
+      C: 'see',
+      D: 'dee',
+      E: 'ee',
+      F: 'eff',
+      G: 'gee',
+      H: 'aitch',
+      I: 'eye',
+      J: 'jay',
+      K: 'kay',
+      L: 'ell',
+      M: 'em',
+      N: 'en',
+      O: 'oh',
+      P: 'pee',
+      Q: 'cue',
+      R: 'ar',
+      S: 'ess',
+      T: 'tee',
+      U: 'you',
+      V: 'vee',
+      W: 'double you',
+      X: 'ex',
+      Y: 'why',
+      Z: 'zee',
+    };
+    const speech = letterNames[text] || text;
+    const wav = path.join(output, id + '.wav');
+    if (!fs.existsSync(wav)) {
+      const audio = await tts.generate(speech, { voice: 'af_heart', speed: 1 });
+      if (!audio.audio?.length || !audio.audio.some(v => Math.abs(v) > 0.005))
+        throw Error('Silent output: ' + text);
+      await audio.save(wav + '.tmp');
+      fs.renameSync(wav + '.tmp', wav);
+    }
+    let encoderReady = true;
+    try {
+      fs.accessSync(ffmpeg, fs.constants.X_OK);
+    } catch {
+      encoderReady = false;
+    }
+    if (encoderReady) {
+      execFileSync(ffmpeg, [
+        '-v',
+        'error',
+        '-y',
+        '-i',
+        wav,
+        '-codec:a',
+        'libmp3lame',
+        '-b:a',
+        '64k',
+        file + '.partial.mp3',
+      ]);
+      fs.renameSync(file + '.partial.mp3', file);
+      fs.unlinkSync(wav);
+    }
   }
-  let encoderReady=true;try{fs.accessSync(ffmpeg,fs.constants.X_OK);}catch{encoderReady=false;}
-  if(encoderReady){
-  execFileSync(ffmpeg,['-v','error','-y','-i',wav,'-codec:a','libmp3lame','-b:a','64k',file+'.partial.mp3']);fs.renameSync(file+'.partial.mp3',file);fs.unlinkSync(wav);}
- }
- if(++n%20===0)console.log(`${n}/${texts.length}`);
+  if (++n % 20 === 0) console.log(`${n}/${texts.length}`);
 }
-const missing=Object.values(manifest).filter(file=>!fs.existsSync(path.join(output,file)));
-if(missing.length){
- if(shards===1)throw Error('Encoder is not ready. Install authoring dependencies and rerun; WAV files are retained.');
- console.log('Shard complete:',shard,'; remaining recordings:',missing.length);
-}else{
- fs.writeFileSync(path.join(root,'src/heart-manifest.js'),'// Generated by scripts/generate-heart.mjs; Heart (af_heart), speed 1.0.\nexport const HEART_AUDIO='+JSON.stringify(manifest,null,2)+';\n');
- console.log('Complete:',texts.length,'Heart recordings');
+const missing = Object.values(manifest).filter(file => !fs.existsSync(path.join(output, file)));
+if (missing.length) {
+  if (shards === 1)
+    throw Error('Encoder is not ready. Install authoring dependencies and rerun; WAV files are retained.');
+  console.log('Shard complete:', shard, '; remaining recordings:', missing.length);
+} else {
+  fs.writeFileSync(
+    path.join(root, 'src/heart-manifest.js'),
+    '// Generated by scripts/generate-heart.mjs; Heart (af_heart), speed 1.0.\nexport const HEART_AUDIO=' +
+      JSON.stringify(manifest, null, 2) +
+      ';\n',
+  );
+  console.log('Complete:', texts.length, 'Heart recordings');
 }
