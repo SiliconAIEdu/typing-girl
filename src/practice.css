@@ -1,6 +1,6 @@
 /* Practice is a teaching workspace: text, keyboard and hands share one viewport. */
 .is-practising {
-  --practice-hand-height: clamp(155px, 25dvh, 205px);
+  --practice-hand-height: clamp(165px, 25.5dvh, 225px);
 }
 .is-practising .sidebar {
   width: 190px;
@@ -255,74 +255,82 @@
   flex: 0 0 auto;
   line-height: 0;
 }
-.typing-hand {
+.hand-svg {
   display: block;
-  height: var(--practice-hand-height, 160px);
+  height: var(--practice-hand-height, 170px);
   width: auto;
   overflow: visible;
 }
-.hand-art {
-  pointer-events: none;
+.palm {
+  fill: #fbe1d2;
+  stroke: #e3b39b;
+  stroke-width: 3;
 }
-.finger-leader {
-  stroke: #c8a8ba;
-  stroke-width: 9;
-  opacity: 0.7;
+.cuff {
+  fill: #efe6ef;
+  stroke: #dccfdc;
+  stroke-width: 3;
 }
-.finger-tip-ring {
-  fill: none;
-  stroke: #a95c84;
-  stroke-width: 17;
-  opacity: 0;
+.finger-body {
+  fill: #fbe1d2;
+  stroke: #e3b39b;
+  stroke-width: 3;
+  transition:
+    fill 0.15s,
+    stroke 0.15s;
+}
+.finger-nail {
+  fill: color-mix(in srgb, var(--finger) 35%, #fff);
+  transition: fill 0.15s;
 }
 .finger-badge {
-  fill: #fffcfe;
-  stroke: #ddc9d6;
-  stroke-width: 9;
-  transition: fill 0.12s;
-}
-.finger-marker.active .finger-leader {
-  stroke: #a95c84;
-  opacity: 1;
-  stroke-width: 13;
-}
-.finger-marker.active .finger-tip-ring {
-  opacity: 1;
-}
-.finger-marker.active .finger-badge {
-  fill: #a45c80;
-  stroke: #a45c80;
-}
-.finger-marker.active {
-  animation: finger-cue-pulse 1.4s ease-in-out infinite;
-}
-@keyframes finger-cue-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.42;
-  }
+  fill: #fff;
+  stroke: color-mix(in srgb, var(--finger) 55%, #fff);
+  stroke-width: 2.5;
 }
 .finger-letter {
   font:
-    500 85px 'DM Sans',
+    600 15px 'DM Sans',
     sans-serif;
   text-anchor: middle;
-  fill: #947b83;
+  fill: #6c5c68;
   pointer-events: none;
 }
-.finger-letter.active {
+/* The whole finger lights up in its own colour. */
+.finger.active .finger-body {
+  fill: var(--finger);
+  stroke: color-mix(in srgb, var(--finger) 70%, #000);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--finger) 75%, transparent));
+}
+.finger.active .finger-nail {
+  fill: color-mix(in srgb, var(--finger) 55%, #fff);
+}
+.finger.active .finger-badge {
   fill: #fff;
-  font-weight: 700;
+  stroke: color-mix(in srgb, var(--finger) 70%, #000);
+  stroke-width: 3;
+}
+.finger.active .finger-letter {
+  fill: color-mix(in srgb, var(--finger) 60%, #000);
+  font-weight: 800;
+}
+.finger {
+  transform-box: fill-box;
+  transition: opacity 0.15s, transform 0.15s;
+}
+/* While one finger is lit, the others step back so the right one is obvious. */
+.hands-pair:has(.finger.active) .finger:not(.active) {
+  opacity: 0.45;
+}
+.finger.active {
+  transform: translateY(-6px);
 }
 .hand-name {
   font:
-    76px 'Noto Sans SC',
+    15px 'Noto Sans SC',
     sans-serif;
   text-anchor: middle;
-  fill: #947b83;
+  fill: #6c5c68;
 }
 .hand-coach {
   display: flex;
@@ -633,10 +641,11 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .finger-badge {
+  .finger-body,
+  .finger-nail {
     transition: none;
   }
-  .finger-marker.active {
+  .finger.active {
     animation: none;
   }
 }
@@ -736,4 +745,18 @@
 .is-practising .brand small,
 .is-practising .nav-caption {
   display: none;
+}
+
+/* Finger zones: every key carries its finger's colour; the lit key fills with it. */
+.is-practising .key[data-zone] {
+  border-bottom: 3px solid color-mix(in srgb, var(--zone) 55%, #fff);
+}
+.is-practising .key.lit {
+  background: color-mix(in srgb, var(--zone, #bb749b) 30%, #fff);
+  border-color: var(--zone, #bb749b);
+  color: color-mix(in srgb, var(--zone, #bb749b) 55%, #000);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--zone, #bb749b) 45%, #fff),
+    0 2px 0 var(--zone, #bb749b);
+  font-weight: 700;
 }

@@ -93,3 +93,13 @@ test('the published site only ships compressed artwork', () => {
   for (const f of art.filter(f => f.endsWith('.webp')))
     assert.ok(fs.statSync(new URL('../public/art/' + f, import.meta.url)).size < 250_000, f);
 });
+
+test('every typing key belongs to a finger colour, and the hands use the same colours', async () => {
+  const { fingerColors, fingerForKey, handsMarkup } = await import('../src/fingering.js');
+  assert.equal(fingerColors.length, 10);
+  for (const k of "abcdefghijklmnopqrstuvwxyz0123456789,./;'[]-= ") assert.ok(fingerForKey(k) >= 0, k);
+  for (const id of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    assert.ok(handsMarkup().includes(`--finger:${fingerColors[id]}`), id);
+  assert.equal(fingerForKey('f'), 3);
+  assert.equal(fingerForKey('j'), 4);
+});

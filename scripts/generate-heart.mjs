@@ -32,39 +32,47 @@ for (const [index, text] of texts.entries()) {
   manifest[text] = id + '.mp3';
   if (index % shards !== shard) continue;
   if (!fs.existsSync(file)) {
-    // Spell uppercase single-letter prompts as letter names, not indefinite articles.
-    const letterNames = {
-      A: 'ay',
-      B: 'bee',
-      C: 'see',
-      D: 'dee',
-      E: 'ee',
-      F: 'eff',
-      G: 'gee',
-      H: 'aitch',
-      I: 'eye',
-      J: 'jay',
-      K: 'kay',
-      L: 'ell',
-      M: 'em',
-      N: 'en',
-      O: 'oh',
-      P: 'pee',
-      Q: 'cue',
-      R: 'ar',
-      S: 'ess',
-      T: 'tee',
-      U: 'you',
-      V: 'vee',
-      W: 'double you',
-      X: 'ex',
-      Y: 'why',
-      Z: 'zee',
+    // Single letters are synthesized from verified American English phonemes. Spelling them as
+    // words ("eff", "ay") made the phonemizer read "ee-eff-eff" and "eye".
+    const letterPhonemes = {
+      A: 'ˈeɪ',
+      B: 'bˈiː',
+      C: 'sˈiː',
+      D: 'dˈiː',
+      E: 'ˈiː',
+      F: 'ˈɛf',
+      G: 'dʒˈiː',
+      H: 'ˈeɪtʃ',
+      I: 'ˈaɪ',
+      J: 'dʒˈeɪ',
+      K: 'kˈeɪ',
+      L: 'ˈɛl',
+      M: 'ˈɛm',
+      N: 'ˈɛn',
+      O: 'ˈoʊ',
+      P: 'pˈiː',
+      Q: 'kjˈuː',
+      R: 'ˈɑːɹ',
+      S: 'ˈɛs',
+      T: 'tˈiː',
+      U: 'jˈuː',
+      V: 'vˈiː',
+      W: 'dˈʌbəljˌuː',
+      X: 'ˈɛks',
+      Y: 'wˈaɪ',
+      Z: 'zˈiː',
     };
-    const speech = letterNames[text] || text;
     const wav = path.join(output, id + '.wav');
     if (!fs.existsSync(wav)) {
-      const audio = await tts.generate(speech, { voice: 'af_heart', speed: 1 });
+      const audio = letterPhonemes[text]
+        ? await tts.generate_from_ids(
+            tts.tokenizer(letterPhonemes[text] + '.', { truncation: true }).input_ids,
+            {
+              voice: 'af_heart',
+              speed: 0.9,
+            },
+          )
+        : await tts.generate(text, { voice: 'af_heart', speed: 1 });
       if (!audio.audio?.length || !audio.audio.some(v => Math.abs(v) > 0.005))
         throw Error('Silent output: ' + text);
       await audio.save(wav + '.tmp');

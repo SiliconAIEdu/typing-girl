@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import sharp from './assets/node_modules/sharp/lib/index.js';
 const jobs = [
   ['hero.png', 'hero.webp', 900],
-  ['typing-hand-left.png', 'typing-hand-left.webp', 640],
   ['tier-1.png', 'tier-1.webp', null],
   ['tier-2.png', 'tier-2.webp', null],
   ['tier-3.png', 'tier-3.webp', null],
