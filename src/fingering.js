@@ -66,33 +66,41 @@ export const fingerColors = [
 ];
 export const fingerForKey = key => (key === ' ' ? 8 : groups.findIndex(g => g.includes(key)));
 
-// Left hand, palm down, fingers pointing at the keyboard: [id, base x, base y, length, width, angle].
-const LEFT_FINGERS = [
-  [0, 64, 150, 94, 33, -14],
-  [1, 109, 128, 120, 36, -5],
-  [2, 156, 120, 132, 37, 1],
-  [3, 203, 128, 118, 36, 8],
-  [8, 232, 200, 88, 39, 58],
+// Cat paws seen from the pad side: four toe beans (little -> index) and a small side bean for the thumb.
+// Each bean is [id, x, y, rx, ry, rotation] for the left paw; the right paw mirrors x and rotation.
+const LEFT_BEANS = [
+  [0, 68, 124, 21, 26, -24],
+  [1, 112, 80, 23, 29, -9],
+  [2, 164, 66, 24, 30, 3],
+  [3, 214, 86, 23, 29, 16],
+  [8, 254, 180, 15, 19, 38],
 ];
+const RIGHT_IDS = [7, 6, 5, 4, 9];
 const WIDTH = 300;
-const rad = deg => (deg * Math.PI) / 180;
-function fingerShape([id, bx, by, len, w, angle], right, label) {
-  const x = right ? WIDTH - bx : bx,
-    a = right ? -angle : angle;
-  // Label sits near the fingertip and stays upright.
-  const lx = x + Math.sin(rad(a)) * (len - w * 0.62),
-    ly = by - Math.cos(rad(a)) * (len - w * 0.62);
-  return `<g class="finger" data-finger="${id}" style="--finger:${fingerColors[id]}"><g transform="translate(${x} ${by}) rotate(${a})"><rect class="finger-body" x="${-w / 2}" y="${-len}" width="${w}" height="${len + 34}" rx="${w / 2}"/><rect class="finger-nail" x="${-w * 0.28}" y="${-len + 5}" width="${w * 0.56}" height="${w * 0.5}" rx="${w * 0.22}"/></g><circle class="finger-badge" cx="${lx}" cy="${ly}" r="15"/><text class="finger-letter" data-finger-label="${id}" data-default-label="${label}" x="${lx}" y="${ly}" dy=".36em">${label}</text></g>`;
-}
-function handSvg(right) {
+const PAD =
+  'M152 152 C188 152 212 178 208 206 C206 223 198 232 187 230 C179 240 166 242 159 235 C155 241 149 241 145 235 C138 242 125 240 117 230 C106 232 98 223 96 206 C92 178 116 152 152 152Z';
+const mirrorPath = d => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (m, x, y) => `${WIDTH - x} ${y}`);
+function pawSvg(right) {
   const labels = right ? [';', 'L', 'K', 'J', '␣'] : ['A', 'S', 'D', 'F', '␣'];
-  const fingers = LEFT_FINGERS.map((f, i) =>
-    fingerShape(right ? [[7, 6, 5, 4, 9][i], ...f.slice(1)] : f, right, labels[i]),
-  );
-  const flip = right ? `transform="translate(${WIDTH} 0) scale(-1 1)"` : '';
-  // Fingers are drawn first so the palm covers their roots; the palm and cuff are one shape.
-  return `<svg class="hand-svg" viewBox="0 -20 ${WIDTH} 318" role="img" aria-label="${right ? '右' : '左'}手五指与基准键">${fingers.join('')}<g class="hand-art" ${flip}><path class="palm" d="M48 150 Q46 122 76 118 L228 118 Q254 122 252 154 L249 214 Q245 252 200 256 L104 256 Q59 252 55 214 Z"/><rect class="cuff" x="94" y="248" width="116" height="26" rx="10"/></g><text class="hand-name" x="${WIDTH / 2}" y="294">${right ? '右手' : '左手'}</text></svg>`;
+  const beans = LEFT_BEANS.map(([id, bx, y, rx, ry, rot], i) => [
+    right ? RIGHT_IDS[i] : id,
+    right ? WIDTH - bx : bx,
+    y,
+    rx,
+    ry,
+    right ? -rot : rot,
+    labels[i],
+  ]);
+  // The fur outline is the same shapes drawn twice: a thick stroke underneath, a clean fill on top.
+  const fur = `${beans.map(([, x, y, rx, ry]) => `<circle cx="${x}" cy="${y}" r="${Math.max(rx, ry) + 15}"/>`).join('')}<ellipse cx="${right ? WIDTH - 152 : 152}" cy="188" rx="108" ry="90"/><rect x="${right ? WIDTH - 214 : 90}" y="216" width="124" height="70" rx="30"/>`;
+  const toes = beans
+    .map(
+      ([id, x, y, rx, ry, rot, label]) =>
+        `<g class="finger" data-finger="${id}" style="--finger:${fingerColors[id]}"><g transform="rotate(${rot} ${x} ${y})"><ellipse class="bean" cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/><ellipse class="bean-shine" cx="${x - rx * 0.28}" cy="${y - ry * 0.4}" rx="${rx * 0.28}" ry="${ry * 0.18}"/></g><text class="finger-letter" data-finger-label="${id}" data-default-label="${label}" x="${x}" y="${y}" dy=".36em">${label}</text></g>`,
+    )
+    .join('');
+  return `<svg class="hand-svg paw-svg" viewBox="0 20 ${WIDTH} 290" role="img" aria-label="${right ? '右' : '左'}爪五个肉垫与基准键"><g class="hand-art"><g class="fur-line">${fur}</g><g class="fur">${fur}</g><path class="paw-pad" d="${right ? mirrorPath(PAD) : PAD}"/><ellipse class="bean-shine" cx="${right ? WIDTH - 134 : 134}" cy="174" rx="15" ry="8"/></g>${toes}<text class="hand-name" x="${WIDTH / 2}" y="304">${right ? '右爪' : '左爪'}</text></svg>`;
 }
 export function handsMarkup() {
-  return `<section class="hands-guide" aria-label="双手指法示意"><div class="hands-pair"><div class="hand-figure">${handSvg(false)}</div><div class="hand-coach"><span class="hand-coach-label">FOLLOW YOUR FINGERS</span><strong id="finger-caption">双手轻轻放好</strong><span id="finger-detail">F 和 J 的小凸点，是食指的起点。</span><span class="home-position">左手 A S D F · 右手 J K L ;</span></div><div class="hand-figure">${handSvg(true)}</div></div></section>`;
+  return `<section class="hands-guide" aria-label="双手指法示意"><div class="hands-pair"><div class="hand-figure">${pawSvg(false)}</div><div class="hand-coach"><span class="hand-coach-label">FOLLOW YOUR FINGERS</span><strong id="finger-caption">双手轻轻放好</strong><span id="finger-detail">F 和 J 的小凸点，是食指的起点。</span><span class="home-position">左手 A S D F · 右手 J K L ;</span></div><div class="hand-figure">${pawSvg(true)}</div></div></section>`;
 }
