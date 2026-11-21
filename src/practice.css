@@ -1,6 +1,6 @@
 /* Practice is a teaching workspace: text, keyboard and hands share one viewport. */
 .is-practising {
-  --practice-hand-height: clamp(165px, 25.5dvh, 225px);
+  --practice-hand-height: clamp(160px, 25dvh, 220px);
 }
 .is-practising .sidebar {
   width: 190px;
@@ -261,69 +261,57 @@
   width: auto;
   overflow: visible;
 }
-.palm {
-  fill: #fbe1d2;
-  stroke: #e3b39b;
-  stroke-width: 3;
+.fur {
+  fill: #fffaf6;
 }
-.cuff {
-  fill: #efe6ef;
-  stroke: #dccfdc;
-  stroke-width: 3;
+.fur-line {
+  fill: #f1e2da;
+  stroke: #ead6cc;
+  stroke-width: 7;
+  stroke-linejoin: round;
 }
-.finger-body {
-  fill: #fbe1d2;
-  stroke: #e3b39b;
-  stroke-width: 3;
-  transition:
-    fill 0.15s,
-    stroke 0.15s;
+.paw-pad {
+  fill: #f7c4d0;
 }
-.finger-nail {
-  fill: color-mix(in srgb, var(--finger) 35%, #fff);
+.bean {
+  fill: #f7c4d0;
+  stroke: #fff;
+  stroke-width: 3;
   transition: fill 0.15s;
 }
-.finger-badge {
+.bean-shine {
   fill: #fff;
-  stroke: color-mix(in srgb, var(--finger) 55%, #fff);
-  stroke-width: 2.5;
+  opacity: 0.55;
 }
 .finger-letter {
   font:
     600 15px 'DM Sans',
     sans-serif;
   text-anchor: middle;
-  fill: #6c5c68;
+  fill: #a65a76;
   pointer-events: none;
-}
-/* The whole finger lights up in its own colour. */
-.finger.active .finger-body {
-  fill: var(--finger);
-  stroke: color-mix(in srgb, var(--finger) 70%, #000);
-  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--finger) 75%, transparent));
-}
-.finger.active .finger-nail {
-  fill: color-mix(in srgb, var(--finger) 55%, #fff);
-}
-.finger.active .finger-badge {
-  fill: #fff;
-  stroke: color-mix(in srgb, var(--finger) 70%, #000);
-  stroke-width: 3;
-}
-.finger.active .finger-letter {
-  fill: color-mix(in srgb, var(--finger) 60%, #000);
-  font-weight: 800;
 }
 .finger {
   transform-box: fill-box;
-  transition: opacity 0.15s, transform 0.15s;
+  transform-origin: 50% 50%;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
-/* While one finger is lit, the others step back so the right one is obvious. */
+/* The lit bean glows in its finger's colour and grows; the other beans step back. */
 .hands-pair:has(.finger.active) .finger:not(.active) {
-  opacity: 0.45;
+  opacity: 0.42;
 }
 .finger.active {
-  transform: translateY(-6px);
+  transform: scale(1.2);
+}
+.finger.active .bean {
+  fill: var(--finger);
+  filter: drop-shadow(0 0 8px var(--finger));
+}
+.finger.active .finger-letter {
+  fill: #fff;
+  font-weight: 800;
 }
 .hand-name {
   font:
@@ -641,8 +629,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .finger-body,
-  .finger-nail {
+  .bean {
     transition: none;
   }
   .finger.active {
