@@ -1,4 +1,4 @@
-import { keyInfo, handsMarkup, fingerNames } from './fingering.js';
+import { keyInfo, handsMarkup, fingerNames, fingerColors, fingerForKey } from './fingering.js';
 import { createVoice, letterToSpeech } from './voice.js';
 import { createSfx } from './sfx.js';
 import { PINYIN } from './pinyin-data.js';
@@ -482,6 +482,10 @@ function englishPage() {
 function chinesePage() {
   return languagePage(false);
 }
+function zoneAttr(k) {
+  const finger = k === 'ShiftLeft' ? 0 : k === 'ShiftRight' ? 7 : k.length === 1 ? fingerForKey(k) : -1;
+  return finger >= 0 ? `data-zone="${finger}" style="--zone:${fingerColors[finger]}"` : '';
+}
 function keyboard() {
   const l = lesson();
   if (l.ime)
@@ -495,7 +499,7 @@ function keyboard() {
     ['ShiftLeft', ...'zxcvbnm', ',', '.', '/', 'ShiftRight'],
     [' '],
   ];
-  return `<section class="keyboard-and-hands"><div class="keyboard-toolbar"><span>键盘与双手 · 按完回到基准位置</span>${l.ime || l.kind === 'edit' ? '<span>双手回到基准位置</span>' : `<button data-action="hints" ${l.kind === 'test' ? 'disabled' : ''}>${s.hints ? '隐藏指法提示' : '显示指法提示'}</button>`}</div><div class="keyboard" aria-label="键盘位置提示">${rows.map(row => `<div class="key-row">${row.map(k => `<span data-key="${esc(k)}" class="key ${k.length > 1 ? 'control' : ''} ${k === ' ' ? 'space' : ''} ${k === 'f' || k === 'j' ? 'home-key' : ''}">${k === ' ' ? '空格' : k === 'Backspace' ? '⌫' : k.startsWith('Shift') ? 'SHIFT' : esc(k.toUpperCase())}</span>`).join('')}</div>`).join('')}</div>${handsMarkup()}</section>`;
+  return `<section class="keyboard-and-hands"><div class="keyboard-toolbar"><span>键盘与双手 · 按完回到基准位置</span>${l.ime || l.kind === 'edit' ? '<span>双手回到基准位置</span>' : `<button data-action="hints" ${l.kind === 'test' ? 'disabled' : ''}>${s.hints ? '隐藏指法提示' : '显示指法提示'}</button>`}</div><div class="keyboard" aria-label="键盘位置提示">${rows.map(row => `<div class="key-row">${row.map(k => `<span data-key="${esc(k)}" ${zoneAttr(k)} class="key ${k.length > 1 ? 'control' : ''} ${k === ' ' ? 'space' : ''} ${k === 'f' || k === 'j' ? 'home-key' : ''}">${k === ' ' ? '空格' : k === 'Backspace' ? '⌫' : k.startsWith('Shift') ? 'SHIFT' : esc(k.toUpperCase())}</span>`).join('')}</div>`).join('')}</div>${handsMarkup()}</section>`;
 }
 function practiceMeta(l, t) {
   return `<div class="practice-meta"><span>${esc(t.storyTitle || t.note || (l.kind === 'edit' ? '用退格修改，检查后按 Enter' : '慢慢看清，再轻轻输入'))}</span><span id="task-count"></span></div>`;
@@ -630,7 +634,7 @@ function updateHands() {
       ? fingerNames[k.shiftFinger] + '同时按住 Shift'
       : k.base === ' '
         ? '左右拇指选一只，轻轻按下。'
-        : '跟着指尖标记，轻按亮起的键。'
+        : '亮起的是哪根手指，就用它按同样颜色的键。'
     : '左食指放 F，右食指放 J。';
 }
 function updateTimer() {
@@ -800,7 +804,7 @@ function overlays() {
   if (!modal) return '';
   let content = '';
   if (modal.type === 'onboard' || modal.type === 'settings')
-    content = `<span class="modal-symbol">✧</span><div class="eyebrow">MAKE THIS SPACE YOURS</div><h2>${modal.type === 'onboard' ? '你好，我是 Luna。' : '找到舒服的节奏。'}</h2><p>从两个键开始。认识词语，写好句子，慢慢读懂完整的故事。</p><div class="welcome-path"><span>词汇积累</span><b>→</b><span>短语与句子</span><b>→</b><span>文章阅读</span></div><label class="setting-toggle"><input id="default-hints" type="checkbox" ${p.settings.hints ? 'checked' : ''}> 开始练习时显示双手指法提示</label><p class="small-note">先跟着指尖标记练。打得准了，Luna 会慢慢收起提示。</p><label class="setting-toggle"><input id="confident" type="checkbox" ${p.settings.confident ? 'checked' : ''}> 我已经会用键盘打字，英语和中文课不用等键位课</label><label class="setting-toggle"><input id="sfx" type="checkbox" ${p.settings.sfx !== false ? 'checked' : ''}> 按键音效（按对、按错、完成时的小声音）</label>${button(modal.type === 'onboard' ? '这是我的小天地 →' : '保存设置', 'welcome')}`;
+    content = `<span class="modal-symbol">✧</span><div class="eyebrow">MAKE THIS SPACE YOURS</div><h2>${modal.type === 'onboard' ? '你好，我是 Luna。' : '找到舒服的节奏。'}</h2><p>从两个键开始。认识词语，写好句子，慢慢读懂完整的故事。</p><div class="welcome-path"><span>词汇积累</span><b>→</b><span>短语与句子</span><b>→</b><span>文章阅读</span></div><label class="setting-toggle"><input id="default-hints" type="checkbox" ${p.settings.hints ? 'checked' : ''}> 开始练习时显示双手指法提示</label><p class="small-note">先跟着亮起的手指练。打得准了，Luna 会慢慢收起提示。</p><label class="setting-toggle"><input id="confident" type="checkbox" ${p.settings.confident ? 'checked' : ''}> 我已经会用键盘打字，英语和中文课不用等键位课</label><label class="setting-toggle"><input id="sfx" type="checkbox" ${p.settings.sfx !== false ? 'checked' : ''}> 按键音效（按对、按错、完成时的小声音）</label>${button(modal.type === 'onboard' ? '这是我的小天地 →' : '保存设置', 'welcome')}`;
   if (modal.type === 'article-picker') {
     const l = LESSONS.find(x => x.id === modal.id),
       u = courseUnit(l),
