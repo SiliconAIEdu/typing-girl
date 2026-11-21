@@ -326,3 +326,59 @@ export function parseProgress(raw) {
     throw Error('设置记录有误。');
   return { ...fresh(), ...p };
 }
+
+// ---- Progress code: a copy-and-paste alternative to backup files (for moving between computers). ----
+const CODE_PREFIX = 'LK1.';
+async function pipeBytes(bytes, transform) {
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(transform)).arrayBuffer());
+}
+export async function encodeProgress(progress) {
+  const bytes = await pipeBytes(
+    new TextEncoder().encode(JSON.stringify(progress)),
+    new CompressionStream('deflate-raw'),
+  );
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return CODE_PREFIX + btoa(bin).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+}
+export async function decodeProgress(code) {
+  const clean = String(code ?? '').replace(/\s+/g, '');
+  if (!clean.startsWith(CODE_PREFIX)) throw Error('这不是 Luna & Keys 的进度码。');
+  let b64 = clean.slice(CODE_PREFIX.length).replaceAll('-', '+').replaceAll('_', '/');
+  while (b64.length % 4) b64 += '=';
+  let text;
+  try {
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    text = new TextDecoder().decode(await pipeBytes(bytes, new DecompressionStream('deflate-raw')));
+  } catch {
+    throw Error('进度码不完整，请重新复制一次。');
+  }
+  return parseProgress(text);
+}
+
+// ---- Weekly summary for parents and teachers. ----
+export function weeklySummary(progress, now = new Date()) {
+  const days = Array.from({ length: 7 }, (_, i) => dayKey(new Date(now.getTime() - (6 - i) * 86400000)));
+  const recent = progress.records.filter(r => days.includes(dayKey(new Date(r.date))));
+  const perDay = days.map(day => {
+    const list = recent.filter(r => dayKey(new Date(r.date)) === day);
+    return { day, minutes: Math.round(list.reduce((n, r) => n + r.seconds, 0) / 60), runs: list.length };
+  });
+  const typing = recent.filter(r => !r.ime && r.kind !== 'edit');
+  const avg = (list, key) =>
+    list.length ? Math.round(list.reduce((n, r) => n + r[key], 0) / list.length) : null;
+  return {
+    perDay,
+    minutes: perDay.reduce((n, d) => n + d.minutes, 0),
+    activeDays: perDay.filter(d => d.runs).length,
+    runs: recent.length,
+    accuracy: avg(recent, 'accuracy'),
+    cpm: avg(typing, 'cpm'),
+    keyLessonsPassed: KEY_LESSONS.filter(l => passed(progress, l.id)).length,
+    weak: Object.entries(progress.weak)
+      .filter(([k]) => /^[ -~]$/.test(k))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([k]) => k),
+  };
+}

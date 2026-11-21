@@ -3,7 +3,7 @@
   --bg: #fcfaf9;
   --paper: #fffefd;
   --ink: #50444f;
-  --muted: #93858e;
+  --muted: #73686f;
   --line: #eae2e7;
   --pink: #c988a2;
   --pink-dark: #a55c7c;
@@ -113,15 +113,15 @@ button:not(:disabled):active {
 }
 .brand small {
   display: block;
-  font-size: 7px;
+  font-size: 11px;
   letter-spacing: 1.65px;
   margin-top: 9px;
   color: var(--muted);
 }
 .nav-caption {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 2px;
-  color: #a99aa5;
+  color: #72686f;
   margin: 46px 13px 18px;
 }
 .nav-item {
@@ -139,8 +139,8 @@ button:not(:disabled):active {
 }
 .nav-item small {
   display: block;
-  font-size: 10px;
-  color: #a396a0;
+  font-size: 12px;
+  color: #71686f;
   font-weight: 400;
   margin-top: 5px;
   letter-spacing: 0.4px;
@@ -150,7 +150,7 @@ button:not(:disabled):active {
   color: #8a536d;
 }
 .nav-item.active small {
-  color: #a16f86;
+  color: #8a5f73;
 }
 .nav-item:hover {
   background: #f0e8ed;
@@ -167,7 +167,7 @@ button:not(:disabled):active {
 }
 .sidebar-note > span {
   font-size: 30px;
-  color: #bd91b0;
+  color: #7f6276;
 }
 .sidebar-note h3 {
   font-size: 18px;
@@ -178,9 +178,9 @@ button:not(:disabled):active {
   line-height: 2;
 }
 .sidebar-bottom {
-  font-size: 7px;
+  font-size: 11px;
   letter-spacing: 1.5px;
-  color: #afa1ab;
+  color: #726970;
   text-align: center;
 }
 .main {
@@ -199,8 +199,8 @@ button:not(:disabled):active {
   font-size: 12px;
 }
 .breadcrumb > span {
-  color: #a99da5;
-  font-size: 10px;
+  color: #726a6f;
+  font-size: 12px;
   margin-left: 10px;
 }
 .top-actions {
@@ -219,12 +219,12 @@ button:not(:disabled):active {
 }
 .diamond-pill > span {
   font-size: 23px;
-  color: #947aa0;
+  color: #786381;
   line-height: 1;
 }
 .sound-button {
   font-size: 21px;
-  color: #9d8e9a;
+  color: #746972;
 }
 .avatar {
   width: 30px;
@@ -252,9 +252,9 @@ main {
   margin-bottom: 27px;
 }
 .eyebrow {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 2.6px;
-  color: #a690a0;
+  color: #776772;
   font-weight: 500;
   line-height: 1.8;
 }
@@ -268,10 +268,10 @@ h1 {
   margin-top: 12px;
 }
 .date-chip {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1px;
   white-space: nowrap;
-  color: #9d8b96;
+  color: #74676f;
   border: 1px solid var(--line);
   padding: 10px 15px;
   border-radius: 30px;
@@ -291,9 +291,9 @@ h1 {
   width: 57%;
 }
 .soft-tag {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 2px;
-  color: #a2778f;
+  color: #836074;
 }
 .hero h2 {
   font-size: 45px;
@@ -303,7 +303,7 @@ h1 {
   font-weight: 400;
 }
 .hero h2 > span {
-  color: #bc809f;
+  color: #8b5e75;
 }
 .hero p {
   font-size: 12px;
@@ -347,8 +347,8 @@ h1 {
   justify-content: space-between;
 }
 .hero-note {
-  font-size: 9px;
-  color: #a99aa2;
+  font-size: 11px;
+  color: #72686d;
   margin-top: 13px;
 }
 .hero-cat {
@@ -364,12 +364,12 @@ h1 {
   position: absolute;
   right: 23px;
   bottom: 25px;
-  font-size: 10px;
+  font-size: 12px;
   background: #fffafbbd;
   border: 1px solid #fff;
   border-radius: 30px;
   padding: 9px 17px;
-  color: #9b8196;
+  color: #796576;
   backdrop-filter: blur(6px);
 }
 .hero-label span {
@@ -402,7 +402,7 @@ h1 {
   place-items: center;
   border-radius: 12px;
   font-size: 23px;
-  color: #9f7990;
+  color: #806274;
 }
 .rose {
   background: var(--rose);
@@ -424,10 +424,10 @@ h1 {
 }
 .home-summary strong small {
   font-size: 12px;
-  color: #ac9da7;
+  color: #70666d;
 }
 .home-summary span > small {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   display: block;
   margin-top: 4px;
@@ -478,9 +478,9 @@ h1 {
   transform: translateY(-3px);
 }
 .entry-number {
-  font-size: 7px;
+  font-size: 11px;
   letter-spacing: 1.3px;
-  color: #9d8495;
+  color: #776471;
 }
 .entry-card h3 {
   font-size: 23px;
@@ -488,7 +488,7 @@ h1 {
   letter-spacing: -0.6px;
 }
 .entry-card p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   min-height: 37px;
   margin: 5px 0 20px;
@@ -499,7 +499,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
+  font-size: 12px;
 }
 .entry-bottom b {
   font-size: 21px;
@@ -524,14 +524,14 @@ h1 {
   box-shadow: 0 5px 0 #ddcbd7;
   font: 30px var(--font);
   transform: rotate(-9deg);
-  color: #92738a;
+  color: #7d6377;
 }
 .key-illustration kbd:last-child {
   transform: rotate(9deg);
   background: #f9f4fc;
 }
 .key-illustration > span {
-  color: #b996ac;
+  color: #7d6574;
   font-size: 25px;
 }
 .book-illustration {
@@ -541,10 +541,10 @@ h1 {
   align-items: center;
   justify-content: center;
   font: italic 50px Georgia;
-  color: #8c7b9a;
+  color: #756680;
 }
 .book-illustration > span {
-  font: 8px var(--font);
+  font: 11px var(--font);
   letter-spacing: 1px;
   margin-top: 7px;
 }
@@ -563,10 +563,10 @@ h1 {
   border-bottom: 5px double #e4d3dc;
   box-shadow: 4px 8px 15px #9a748516;
   font-size: 32px;
-  color: #a88ba0;
+  color: #786372;
 }
 .mini-pack small {
-  font-size: 5px;
+  font-size: 11px;
   letter-spacing: 0.7px;
 }
 .next-step {
@@ -581,12 +581,12 @@ h1 {
 }
 .tiny-spark {
   font-size: 35px;
-  color: #bda2b4;
+  color: #786772;
 }
 .next-step small {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 1.5px;
-  color: #aa94a4;
+  color: #766772;
 }
 .next-step h3 {
   font-size: 16px;
@@ -604,8 +604,8 @@ footer {
   padding: 20px 45px;
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
-  color: #a392a0;
+  font-size: 11px;
+  color: #756872;
   letter-spacing: 0.5px;
 }
 .notice {
@@ -613,14 +613,14 @@ footer {
   border: 1px solid #e8dfe6;
   border-radius: 11px;
   background: #f7f1f4;
-  color: #8f7787;
+  color: #7b6674;
   font-size: 12px;
   line-height: 1.9;
   margin-bottom: 20px;
 }
 .chapter-no {
   font: 15px Georgia;
-  color: #ba9bb0;
+  color: #796573;
   margin-right: 10px;
 }
 .lesson-grid {
@@ -648,12 +648,12 @@ footer {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 25px;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.5px;
-  color: #ab97a6;
+  color: #736670;
 }
 .status {
-  font-size: 9px;
+  font-size: 11px;
   padding: 3px 7px;
   background: #f5f0f3;
   border-radius: 15px;
@@ -662,7 +662,7 @@ footer {
 }
 .status.stable {
   background: #eaf1e8;
-  color: #778c72;
+  color: #5d6e59;
 }
 .lesson-card h3 {
   font-size: 20px;
@@ -674,7 +674,7 @@ footer {
   font-weight: 500;
 }
 .lesson-card p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
   margin: 8px 0 20px;
   flex: 1;
@@ -682,10 +682,10 @@ footer {
 .lesson-tail {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 12px;
   padding-top: 13px;
   border-top: 1px solid #eee6eb;
-  color: #ac7995;
+  color: #875f75;
   gap: 6px;
 }
 .level-picker {
@@ -704,7 +704,7 @@ footer {
 .level-picker button.selected {
   background: #ede3ef;
   border-color: #c9b3d0 !important;
-  color: #806489;
+  color: #7c6185;
 }
 .mode-tabs {
   display: flex;
@@ -716,11 +716,11 @@ footer {
   padding: 11px 2px;
   border-bottom: 2px solid transparent;
   font-size: 12px;
-  color: #9d8a99;
+  color: #746671;
 }
 .mode-tabs button.active {
   border-color: #ba83a3;
-  color: #945c7d;
+  color: #905979;
 }
 .soft-panel {
   display: flex;
@@ -733,19 +733,19 @@ footer {
 }
 .soft-panel > span {
   font-size: 35px;
-  color: #b095bc;
+  color: #76647f;
 }
 .soft-panel p {
   font-size: 12px;
   line-height: 2;
-  color: #8d7895;
+  color: #75647c;
 }
 .soft-panel small {
-  font-size: 10px;
+  font-size: 12px;
 }
 .text-button {
   font-size: 11px;
-  color: #a07794;
+  color: #816078;
   padding: 10px 0;
 }
 .text-button:hover {
@@ -762,9 +762,9 @@ footer {
   text-align: center;
 }
 .session-toolbar small {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 2px;
-  color: #a58d9f;
+  color: #766572;
 }
 .session-toolbar h2 {
   font-size: 18px;
@@ -787,8 +787,8 @@ footer {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  font-size: 10px;
-  color: #9e889b;
+  font-size: 12px;
+  color: #756472;
 }
 .practice-meta > span:last-child {
   white-space: nowrap;
@@ -823,7 +823,7 @@ footer {
   min-height: 30px;
 }
 .task-tools button {
-  font-size: 10px;
+  font-size: 12px;
 }
 .translation {
   display: none;
@@ -864,7 +864,7 @@ footer {
   padding: 0 1px;
 }
 .target-text .typed {
-  color: #bdb3bb;
+  color: #6d676c;
 }
 .target-text .current {
   background: #f4dce8;
@@ -873,24 +873,24 @@ footer {
 }
 .instruction {
   font-size: 12px;
-  color: #92718a;
+  color: #7d6177;
   text-align: center;
   min-height: 26px;
 }
 .instruction.error {
-  color: #ac706f;
+  color: #8f5d5c;
 }
 .keyboard-toolbar {
   display: flex;
   justify-content: space-between;
   border-top: 1px solid var(--line);
   padding: 14px 0;
-  font-size: 10px;
-  color: #9a8394;
+  font-size: 12px;
+  color: #796774;
 }
 .keyboard-toolbar button {
-  font-size: 10px;
-  color: #a08498;
+  font-size: 12px;
+  color: #7a6474;
   padding: 0;
 }
 .keyboard {
@@ -920,13 +920,13 @@ footer {
 }
 .key.control {
   flex: 1.6;
-  font-size: 7px;
+  font-size: 11px;
   background: #f5f1f6;
 }
 .key.space {
   max-width: 55%;
   height: 30px;
-  font-size: 9px;
+  font-size: 11px;
   margin-top: 2px;
 }
 .key.home-key:after {
@@ -953,12 +953,12 @@ footer {
   padding: 12px;
   background: #faf5f9;
   border-radius: 10px;
-  font-size: 9px;
-  color: #a18d9d;
+  font-size: 11px;
+  color: #736570;
 }
 .finger-guide b {
   display: block;
-  color: #8c6e86;
+  color: #7c6177;
   letter-spacing: 5px;
   font-size: 12px;
   margin-top: 3px;
@@ -966,10 +966,10 @@ footer {
 }
 .guide-dot {
   font-size: 22px;
-  color: #bda0b5;
+  color: #786573;
 }
 .keyboard-footnote {
-  font-size: 8px;
+  font-size: 11px;
   text-align: center;
   margin-top: 15px;
   line-height: 1.8;
@@ -981,9 +981,9 @@ footer {
   background: #fcf8fa;
 }
 .companion-title > span {
-  font-size: 7px;
+  font-size: 11px;
   letter-spacing: 1.6px;
-  color: #ac94a3;
+  color: #776771;
 }
 .companion-title h3 {
   font-size: 24px;
@@ -1012,13 +1012,13 @@ footer {
   background: radial-gradient(ellipse, #eae0ef, transparent 70%);
 }
 .cat-bubble {
-  font-size: 10px;
+  font-size: 12px;
   text-align: center;
   border: 1px solid #e2d3e0;
   border-radius: 30px;
   padding: 12px 8px;
   background: #fffbfd;
-  color: #9c7a92;
+  color: #7e6376;
 }
 .practice-stats {
   display: grid;
@@ -1032,8 +1032,8 @@ footer {
   border-left: 1px solid #e7dce5;
 }
 .practice-stats small {
-  font-size: 10px;
-  color: #a08a9a;
+  font-size: 12px;
+  color: #766672;
   display: block;
 }
 .practice-stats strong {
@@ -1055,23 +1055,23 @@ footer {
 }
 .practice-reward > span {
   font-size: 30px;
-  color: #9f7a95;
+  color: #806378;
 }
 .practice-reward b {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   display: block;
 }
 .practice-reward small {
   display: block;
-  font-size: 8px;
-  color: #ad91a3;
+  font-size: 11px;
+  color: #786571;
   margin-top: 5px;
 }
 .help-button {
   width: 100%;
-  font-size: 9px;
-  color: #a88b9f;
+  font-size: 11px;
+  color: #786372;
   margin-top: 14px;
 }
 .typing-input {
@@ -1086,7 +1086,7 @@ footer {
 }
 .input-note {
   padding: 25px 5px;
-  color: #a08a99;
+  color: #766671;
   font-size: 12px;
   border-top: 1px solid var(--line);
 }
@@ -1097,7 +1097,7 @@ footer {
 }
 .result-paw {
   font-size: 75px;
-  color: #b798b6;
+  color: #776377;
   line-height: 1.5;
 }
 .result-page h1 {
@@ -1123,17 +1123,17 @@ footer {
   display: block;
   font-size: 30px;
   font-weight: 500;
-  color: #a67594;
+  color: #865f78;
 }
 .result-numbers span {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 6px;
 }
 .result-message {
   font-size: 12px;
-  color: #8d7588;
+  color: #796475;
   margin: 20px 0;
 }
 .reward-breakdown {
@@ -1144,11 +1144,11 @@ footer {
   margin: 20px 0;
 }
 .reward-breakdown > span {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .reward-breakdown b {
-  color: #a06d90;
+  color: #895e7c;
   margin-left: 7px;
 }
 .result-actions {
@@ -1201,15 +1201,15 @@ footer {
 .wallet > span {
   font-size: 35px;
   grid-row: span 2;
-  color: #a285a7;
+  color: #77627b;
 }
 .wallet b {
   font-size: 25px;
   font-weight: 500;
 }
 .wallet small {
-  color: #a08b9f;
-  font-size: 9px;
+  color: #766775;
+  font-size: 11px;
 }
 .pack-grid {
   display: grid;
@@ -1232,9 +1232,9 @@ footer {
 .pool-top {
   display: flex;
   justify-content: space-between;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 1.2px;
-  color: #9f8496;
+  color: #796472;
 }
 .foil-pack {
   width: 145px;
@@ -1280,28 +1280,28 @@ footer {
   border-bottom: 0;
 }
 .foil-pack > small {
-  font-size: 7px;
+  font-size: 11px;
   letter-spacing: 1.8px;
-  color: #9c7e92;
+  color: #7a6372;
   margin-top: 8px;
 }
 .pack-symbol {
   font-size: 44px;
-  color: #b18ba4;
+  color: #7f6375;
   margin: 14px 0 9px;
   font-weight: 400;
 }
 .foil-pack > b {
   font-size: 11px;
   font-weight: 500;
-  color: #9b7893;
+  color: #7d6177;
   padding: 0 12px;
 }
 .pack-caption {
-  font-size: 5px;
+  font-size: 11px;
   letter-spacing: 1.2px;
   margin-top: 14px;
-  color: #ad8e9f;
+  color: #7c6672;
 }
 .pool-card h2 {
   font-size: 22px;
@@ -1309,21 +1309,21 @@ footer {
   min-height: 30px;
 }
 .pool-card p {
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 7px;
 }
 .pool-price {
   font-size: 23px;
-  color: #a57a98;
+  color: #816077;
   margin: 18px 0;
 }
 .pool-price b {
   font-weight: 500;
 }
 .pool-price small {
-  font-size: 9px;
+  font-size: 11px;
   margin-left: 7px;
-  color: #a3919e;
+  color: #756871;
 }
 .pool-card .primary {
   width: 100%;
@@ -1332,7 +1332,7 @@ footer {
 }
 .pool-card .text-button {
   margin-top: 7px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .pack-rules {
   display: grid;
@@ -1343,9 +1343,9 @@ footer {
   border-top: 1px solid var(--line);
 }
 .pack-rules > div > span {
-  font-size: 10px;
+  font-size: 12px;
   font-family: Georgia;
-  color: #b698ae;
+  color: #776372;
 }
 .pack-rules h3 {
   font-size: 14px;
@@ -1357,12 +1357,12 @@ footer {
 }
 .collection-count {
   font-size: 35px;
-  color: #a7819e;
+  color: #7f6278;
   white-space: nowrap;
 }
 .collection-count small {
-  font-size: 9px;
-  color: #ae98a6;
+  font-size: 11px;
+  color: #756670;
   letter-spacing: 1px;
 }
 .collection-filters {
@@ -1407,13 +1407,13 @@ footer {
   background: #f3eef3;
   border: 1px dashed #ded0df;
   border-radius: 7px;
-  color: #c4b3c2;
+  color: #716770;
 }
 .card-back > span {
   font-size: 45px;
 }
 .card-back small {
-  font-size: 6px;
+  font-size: 11px;
   letter-spacing: 1px;
   margin-top: 12px;
 }
@@ -1423,8 +1423,8 @@ footer {
 .card-label > small {
   display: flex;
   justify-content: space-between;
-  font-size: 7px;
-  color: #b29aa9;
+  font-size: 11px;
+  color: #74656e;
   letter-spacing: 0.7px;
 }
 .card-label h3 {
@@ -1433,7 +1433,7 @@ footer {
   margin: 6px 0;
 }
 .card-label p {
-  font-size: 8px;
+  font-size: 11px;
 }
 .collectible.tier-2.owned {
   border-color: #bbcbb9;
@@ -1464,7 +1464,7 @@ footer {
 .journey-summary b {
   display: block;
   font-size: 33px;
-  color: #a2819b;
+  color: #7b6276;
   font-weight: 400;
 }
 .journey-summary span {
@@ -1481,7 +1481,7 @@ footer {
   font-size: 20px;
 }
 .chart-panel > p {
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 7px;
 }
 .chart {
@@ -1495,11 +1495,11 @@ footer {
   flex: 1;
   max-width: 70px;
   text-align: center;
-  font-size: 9px;
+  font-size: 11px;
 }
 .bar-column small {
-  font-size: 9px;
-  color: #a2819b;
+  font-size: 11px;
+  color: #7b6276;
 }
 .bar-column i {
   display: block;
@@ -1508,8 +1508,8 @@ footer {
   margin: 7px 0;
 }
 .bar-column span {
-  color: #a995a5;
-  font-size: 8px;
+  color: #756772;
+  font-size: 11px;
 }
 .history {
   margin-top: 25px;
@@ -1528,11 +1528,11 @@ table {
   font-size: 11px;
 }
 th {
-  color: #9d8999;
+  color: #746571;
   font-weight: 500;
   background: #f6f0f5;
   padding: 13px 18px;
-  font-size: 10px;
+  font-size: 12px;
 }
 td {
   padding: 15px 18px;
@@ -1540,8 +1540,8 @@ td {
 }
 td small {
   display: block;
-  color: #b5a6b1;
-  font-size: 8px;
+  color: #736970;
+  font-size: 11px;
   margin-top: 3px;
 }
 .backup-panel {
@@ -1559,7 +1559,7 @@ td small {
   margin: 7px 0;
 }
 .backup-panel p {
-  font-size: 10px;
+  font-size: 12px;
 }
 .backup-panel > div:last-child {
   display: flex;
@@ -1607,13 +1607,13 @@ td small {
   top: 12px;
   right: 15px;
   font-size: 24px;
-  color: #aa8c9e;
+  color: #7a6471;
   padding: 5px 9px;
 }
 .modal-symbol {
   display: block;
   font-size: 44px;
-  color: #bc99b4;
+  color: #7b6476;
   margin: 0 0 14px;
 }
 .setting-choices {
@@ -1635,8 +1635,8 @@ td small {
   background: #f0e4ef;
 }
 .setting-choices span {
-  font-size: 9px;
-  color: #ad91a7;
+  font-size: 11px;
+  color: #786574;
 }
 .setting-toggle {
   display: flex;
@@ -1645,13 +1645,13 @@ td small {
   gap: 8px;
   margin-top: 18px;
   font-size: 11px;
-  color: #96748d;
+  color: #7d6175;
 }
 .setting-toggle input {
   accent-color: #b47d9e;
 }
 .small-note {
-  font-size: 10px !important;
+  font-size: 12px !important;
 }
 .detail-card {
   max-width: 285px;
@@ -1663,8 +1663,8 @@ td small {
 }
 .detail-card > small {
   display: block;
-  font-size: 9px;
-  color: #a0869b;
+  font-size: 11px;
+  color: #7a6676;
   margin: 16px 0 5px;
 }
 .detail-card > h2 {
@@ -1738,9 +1738,9 @@ td small {
 }
 .revealed-card small {
   display: block;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 1.5px;
-  color: #b08ca5;
+  color: #7e6476;
   margin: 12px 0 6px;
 }
 .revealed-card h3 {
@@ -1760,7 +1760,7 @@ td small {
 .empty-state {
   text-align: center;
   padding: 70px 20px;
-  color: #bb9fb4;
+  color: #766572;
   font-size: 40px;
 }
 .empty-state h3 {
@@ -1773,7 +1773,7 @@ td small {
 }
 .save-warning {
   background: #fff0df;
-  color: #9f7150;
+  color: #896145;
   padding: 14px 25px;
   font-size: 12px;
 }
@@ -1836,7 +1836,7 @@ td small {
     font-size: 15px;
   }
   .key.control {
-    font-size: 8px;
+    font-size: 11px;
   }
   .typing-area {
     min-height: 300px;
@@ -1911,7 +1911,7 @@ td small {
     font-size: 23px;
   }
   .practice-meta {
-    font-size: 9px;
+    font-size: 11px;
   }
   .lesson-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1937,7 +1937,7 @@ td small {
   }
   .level-picker button {
     padding: 11px;
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 @media (max-width: 960px) {
@@ -1956,7 +1956,7 @@ td small {
     font-size: 18px;
   }
   .brand small {
-    font-size: 6px;
+    font-size: 11px;
     letter-spacing: 1px;
   }
   .nav-item {
@@ -1968,7 +1968,7 @@ td small {
     font-size: 20px;
   }
   .nav-item small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .topbar {
     padding: 0 23px;
@@ -2003,10 +2003,10 @@ td small {
   .hero-label {
     right: 15px;
     bottom: 12px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .hero-note {
-    font-size: 8px;
+    font-size: 11px;
   }
   .home-summary {
     padding: 17px 0;
@@ -2022,7 +2022,7 @@ td small {
     font-size: 21px;
   }
   .home-summary span > small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .entry-grid {
     gap: 11px;
@@ -2031,14 +2031,14 @@ td small {
     padding: 16px 13px 0;
   }
   .entry-number {
-    font-size: 6px;
+    font-size: 11px;
     letter-spacing: 0.7px;
   }
   .entry-card h3 {
     font-size: 18px;
   }
   .entry-card p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .key-illustration {
     gap: 8px;
@@ -2049,17 +2049,17 @@ td small {
     font-size: 24px;
   }
   .entry-bottom {
-    font-size: 9px;
+    font-size: 11px;
   }
   .next-step {
     padding: 18px;
     gap: 13px;
   }
   .next-step p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .next-step .secondary {
-    font-size: 10px;
+    font-size: 12px;
     padding: 10px;
   }
   .practice-layout {
@@ -2086,7 +2086,7 @@ td small {
   }
   .cat-bubble {
     grid-column: 2/4;
-    font-size: 10px;
+    font-size: 12px;
   }
   .practice-stats {
     grid-column: 2;
@@ -2112,16 +2112,16 @@ td small {
     font-size: 13px;
   }
   .key.control {
-    font-size: 8px;
+    font-size: 11px;
   }
   .pool-card h2 {
     font-size: 17px;
   }
   .pool-card p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .pool-top {
-    font-size: 7px;
+    font-size: 11px;
     letter-spacing: 0.7px;
   }
   .foil-pack {
@@ -2129,17 +2129,17 @@ td small {
     height: 165px;
   }
   .foil-pack > b {
-    font-size: 9px;
+    font-size: 11px;
   }
   .pack-symbol {
     font-size: 35px;
     margin: 10px 0;
   }
   .pack-caption {
-    font-size: 4px;
+    font-size: 11px;
   }
   .pool-card .primary {
-    font-size: 10px;
+    font-size: 12px;
   }
   .pack-rules {
     gap: 17px;
@@ -2149,7 +2149,7 @@ td small {
     font-size: 12px;
   }
   .pack-rules p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .journey-summary {
     gap: 10px;
@@ -2161,7 +2161,7 @@ td small {
     font-size: 29px;
   }
   .journey-summary span {
-    font-size: 10px;
+    font-size: 12px;
   }
   footer {
     padding: 20px 23px;
@@ -2195,7 +2195,7 @@ td small {
     padding: 6px;
   }
   .breadcrumb {
-    font-size: 10px;
+    font-size: 12px;
     margin-right: auto;
   }
   .top-actions {
@@ -2223,7 +2223,7 @@ td small {
     line-height: 1.9;
   }
   .eyebrow {
-    font-size: 8px;
+    font-size: 11px;
     letter-spacing: 2px;
   }
   .hero {
@@ -2258,7 +2258,7 @@ td small {
     right: 16px;
   }
   .hero-note {
-    font-size: 9px;
+    font-size: 11px;
     max-width: 130px;
   }
   .home-summary {
@@ -2272,7 +2272,7 @@ td small {
     font-size: 19px;
   }
   .home-summary span > small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .dots {
     display: none;
@@ -2284,7 +2284,7 @@ td small {
     font-size: 18px;
   }
   .section-title > .muted {
-    font-size: 9px;
+    font-size: 11px;
   }
   .entry-grid {
     grid-template-columns: 1fr;
@@ -2295,7 +2295,7 @@ td small {
     min-height: 188px;
   }
   .entry-number {
-    font-size: 7px;
+    font-size: 11px;
     letter-spacing: 1px;
   }
   .entry-card h3 {
@@ -2303,7 +2303,7 @@ td small {
     margin-top: 20px;
   }
   .entry-card p {
-    font-size: 10px;
+    font-size: 12px;
     max-width: 65%;
     min-height: 35px;
     margin-bottom: 15px;
@@ -2328,7 +2328,7 @@ td small {
     height: 85px;
   }
   .entry-bottom {
-    font-size: 10px;
+    font-size: 12px;
   }
   .next-step {
     flex-wrap: wrap;
@@ -2350,19 +2350,19 @@ td small {
     font-size: 18px;
   }
   .lesson-card h4 {
-    font-size: 10px;
+    font-size: 12px;
   }
   .lesson-meta {
-    font-size: 7px;
+    font-size: 11px;
     margin-bottom: 20px;
     gap: 5px;
   }
   .status {
-    font-size: 8px;
+    font-size: 11px;
     padding: 3px 6px;
   }
   .lesson-tail {
-    font-size: 9px;
+    font-size: 11px;
   }
   .notice {
     padding: 13px 15px;
@@ -2387,23 +2387,23 @@ td small {
     gap: 7px;
   }
   .session-toolbar > div small {
-    font-size: 7px;
+    font-size: 11px;
   }
   .session-toolbar h2 {
     font-size: 15px;
   }
   .session-toolbar .text-button {
-    font-size: 10px;
+    font-size: 12px;
   }
   .session-toolbar .secondary {
     padding: 8px 10px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .practice-card {
     padding: 18px 10px;
   }
   .practice-meta {
-    font-size: 9px;
+    font-size: 11px;
     padding: 0 6px;
   }
   .typing-area {
@@ -2430,35 +2430,35 @@ td small {
   }
   .key {
     height: 31px;
-    font-size: 10px;
+    font-size: 12px;
     border-radius: 4px;
   }
   .key.control {
-    font-size: 5px;
+    font-size: 11px;
   }
   .key.space {
     height: 26px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .keyboard-toolbar {
-    font-size: 9px;
+    font-size: 11px;
     padding: 12px 4px;
   }
   .keyboard-toolbar button {
-    font-size: 9px;
+    font-size: 11px;
   }
   .finger-guide {
     margin-top: 22px;
     gap: 17px;
     padding: 10px;
-    font-size: 8px;
+    font-size: 11px;
   }
   .finger-guide b {
     font-size: 11px;
     letter-spacing: 3px;
   }
   .keyboard-footnote {
-    font-size: 7px;
+    font-size: 11px;
   }
   .companion {
     grid-template-columns: 105px 1fr;
@@ -2469,7 +2469,7 @@ td small {
     grid-column: 2;
   }
   .companion-title > span {
-    font-size: 6px;
+    font-size: 11px;
     letter-spacing: 1px;
   }
   .companion-title h3 {
@@ -2483,7 +2483,7 @@ td small {
   .cat-bubble {
     grid-column: 2;
     padding: 10px 8px;
-    font-size: 9px;
+    font-size: 11px;
   }
   .practice-stats {
     grid-column: 2;
@@ -2501,11 +2501,11 @@ td small {
     font-size: 11px;
   }
   .practice-reward small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .help-button {
     grid-column: 1/3;
-    font-size: 10px;
+    font-size: 12px;
   }
   .pack-grid {
     grid-template-columns: 1fr;
@@ -2520,7 +2520,7 @@ td small {
   }
   .pool-top {
     grid-column: 1/3;
-    font-size: 8px;
+    font-size: 11px;
     margin-bottom: 12px;
   }
   .pool-card .foil-pack {
@@ -2536,18 +2536,18 @@ td small {
     margin-top: 12px;
   }
   .pool-card p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .pool-price {
     font-size: 24px;
     margin: 15px 0;
   }
   .pool-card .primary {
-    font-size: 10px;
+    font-size: 12px;
     margin: 4px 0;
   }
   .pool-card .text-button {
-    font-size: 9px;
+    font-size: 11px;
     text-align: left;
   }
   .pack-rules {
@@ -2579,14 +2579,14 @@ td small {
     font-size: 22px;
   }
   .wallet small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .collection-count {
     font-size: 28px;
   }
   .collection-count small {
     display: block;
-    font-size: 7px;
+    font-size: 11px;
   }
   .collection-filters {
     flex-wrap: wrap;
@@ -2598,7 +2598,7 @@ td small {
   }
   .collection-filters > .secondary {
     margin: 0 0 20px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .collection-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -2608,7 +2608,7 @@ td small {
     font-size: 12px;
   }
   .card-label p {
-    font-size: 8px;
+    font-size: 11px;
   }
   .journey-summary {
     grid-template-columns: repeat(2, 1fr);
@@ -2621,7 +2621,7 @@ td small {
   }
   .bar-column small,
   .bar-column span {
-    font-size: 7px;
+    font-size: 11px;
   }
   .backup-panel {
     align-items: start;
@@ -2646,7 +2646,7 @@ td small {
     font-size: 24px;
   }
   .result-numbers span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .result-message {
     font-size: 11px;
@@ -2656,7 +2656,7 @@ td small {
     gap: 10px;
   }
   .reward-breakdown > span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .quiz {
     padding: 23px 17px;
@@ -2693,7 +2693,7 @@ td small {
     padding: 12px;
   }
   .setting-choices span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .opening-stage {
     height: 330px;
@@ -2705,14 +2705,14 @@ td small {
     padding: 18px;
   }
   .save-warning {
-    font-size: 10px;
+    font-size: 12px;
   }
   footer {
     padding: 18px;
-    font-size: 8px;
+    font-size: 11px;
   }
   footer span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .typing-input {
     font-size: 17px;
@@ -2871,8 +2871,8 @@ td small {
   background: #f8f7f6e8;
   border: 1px solid #e4e0e4;
   border-radius: 8px;
-  font-size: 10px;
-  color: #867e86;
+  font-size: 12px;
+  color: #706970;
 }
 .card-lock svg {
   width: 14px;
@@ -2883,14 +2883,14 @@ td small {
   stroke-linecap: round;
 }
 .collectible.unowned .card-label h3 {
-  color: #817681;
+  color: #726872;
 }
 .course-overview {
   display: flex;
   gap: 22px;
   flex-wrap: wrap;
   font-size: 12px;
-  color: #a0879c;
+  color: #766473;
   margin: -8px 0 25px;
 }
 .learning-path {
@@ -2915,7 +2915,7 @@ td small {
 }
 .path-number {
   font-size: 20px;
-  color: #bd97b1;
+  color: #7b6374;
 }
 .learning-path b {
   font-weight: 500;
@@ -2924,13 +2924,13 @@ td small {
 }
 .learning-path small {
   display: block;
-  font-size: 10px;
-  color: #a28e9c;
+  font-size: 12px;
+  color: #746670;
   margin-top: 4px;
 }
 .path-arrow {
   margin-left: auto;
-  color: #b194a8;
+  color: #776471;
 }
 .course-card {
   display: flex;
@@ -2945,8 +2945,8 @@ td small {
   line-height: 1.8;
 }
 .course-amount {
-  font-size: 10px;
-  color: #b08aa4;
+  font-size: 12px;
+  color: #7e6375;
   margin-top: 12px;
   margin-bottom: 12px;
 }
@@ -2983,7 +2983,7 @@ td small {
 }
 .welcome-path b {
   font-weight: 400;
-  color: #c199b6;
+  color: #7e6477;
 }
 .article-options {
   display: grid;
@@ -3002,9 +3002,9 @@ td small {
   background: #f9f0f6;
 }
 .article-options small {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.3px;
-  color: #a88b9e;
+  color: #786371;
 }
 .article-options h3 {
   font-size: 21px;
@@ -3019,7 +3019,7 @@ td small {
   display: block;
   margin-top: 12px;
   font-size: 12px;
-  color: #ad7598;
+  color: #885c77;
 }
 @media (max-width: 960px) {
   .learning-path button {
@@ -3033,7 +3033,7 @@ td small {
     font-size: 13px;
   }
   .learning-path small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .path-arrow {
     display: none;
@@ -3060,11 +3060,11 @@ td small {
     font-size: 11px;
   }
   .learning-path small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .course-overview {
     gap: 12px;
-    font-size: 10px;
+    font-size: 12px;
     margin: 0 0 20px;
   }
   .course-card h3 {
@@ -3074,7 +3074,7 @@ td small {
     font-size: 11px;
   }
   .course-amount {
-    font-size: 9px;
+    font-size: 11px;
   }
   .pinyin-entry {
     padding: 14px;
@@ -3082,16 +3082,16 @@ td small {
   }
   .pinyin-entry .secondary {
     white-space: nowrap;
-    font-size: 10px;
+    font-size: 12px;
   }
   .pinyin-entry p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .article-options h3 {
     font-size: 19px;
   }
   .welcome-path {
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
@@ -3101,11 +3101,11 @@ td small {
 }
 .zh-illustration {
   font: 600 46px var(--font);
-  color: #7f9178;
+  color: #616e5b;
 }
 .result-compare {
   font-size: 13px;
-  color: #7f9178;
+  color: #616e5b;
   margin: -6px 0 4px;
 }
 .result-independent {
@@ -3114,7 +3114,7 @@ td small {
   padding: 2px 9px;
   border-radius: 12px;
   background: #f3edf5;
-  color: #7d6290;
+  color: #795f8c;
   font-size: 12px;
 }
 .result-message {
@@ -3143,7 +3143,7 @@ td small {
 }
 .weak-keys small {
   font-size: 12px;
-  color: #8d7588;
+  color: #796475;
   margin-right: 6px;
 }
 .weak-keys .muted {
@@ -3189,5 +3189,147 @@ td small {
     flex-direction: column;
     gap: 6px;
     margin-top: 0;
+  }
+}
+
+/* ---- P1: readability, game feel, cards, mobile ---- */
+.target-text .typed {
+  color: #5f7f5a;
+}
+.device-note {
+  display: none;
+}
+@media (pointer: coarse), (max-width: 700px) {
+  .device-note {
+    display: block;
+    margin-top: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .hero-label {
+    top: 16px;
+    bottom: auto;
+    right: 16px;
+  }
+}
+.card-story {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+  margin: 8px 0 4px;
+}
+.revealed-card .card-story {
+  font-size: 12px;
+  margin: -4px 4px 10px;
+}
+/* A visible value ladder: tier II pearl frame, tier III animated holographic frame. */
+.collectible.tier-2.owned,
+.detail-card.tier-2,
+.revealed-card.tier-2 {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#fff, #fbfcf8) padding-box,
+    linear-gradient(135deg, #cfdcc9, #f3f6ee, #b9cdb3, #eef3ea) border-box;
+  box-shadow: 0 6px 18px #7f957a1f;
+}
+.collectible.tier-3.owned,
+.detail-card.tier-3,
+.revealed-card.tier-3 {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#fffaff, #f8f4fd) padding-box,
+    linear-gradient(120deg, #f6b7d6, #b9a7f0, #9fe0dc, #f9e0a6, #f6b7d6) border-box;
+  background-size:
+    100% 100%,
+    300% 300%;
+  animation: holo-frame 6s linear infinite;
+  box-shadow: 0 8px 26px #9c7fd02e;
+}
+@keyframes holo-frame {
+  to {
+    background-position:
+      0 0,
+      300% 0;
+  }
+}
+.code-box {
+  width: 100%;
+  font:
+    12px/1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  word-break: break-all;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.parent-report {
+  margin-top: 20px;
+}
+.parent-report .section-title {
+  margin-top: 0;
+}
+.parent-report .journey-summary {
+  grid-template-columns: repeat(5, 1fr);
+  margin: 12px 0 8px;
+}
+.week-chart {
+  min-height: 150px;
+}
+.report-note {
+  font-size: 13px;
+  line-height: 1.8;
+  margin-top: 12px;
+}
+@media (max-width: 700px) {
+  .parent-report .journey-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media print {
+  .sidebar,
+  .topbar,
+  footer,
+  .chart-panel:not(.parent-report),
+  .journey-summary:not(.parent-report .journey-summary),
+  .history,
+  .backup-panel,
+  .page-heading,
+  .parent-report button {
+    display: none !important;
+  }
+  .main {
+    margin: 0 !important;
+  }
+  body {
+    background: #fff;
+  }
+}
+/* Layout fixes after raising the minimum font size. */
+.brand small {
+  letter-spacing: 0.6px;
+  white-space: normal;
+}
+.nav-caption {
+  letter-spacing: 1px;
+}
+.hero-label {
+  top: 23px;
+  bottom: auto;
+}
+.mini-pack small {
+  letter-spacing: 0;
+}
+.pack-modal .opening-stage.reveal {
+  height: 400px;
+}
+@media (max-width: 700px) {
+  .hero-label {
+    display: none;
   }
 }

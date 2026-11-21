@@ -1,5 +1,7 @@
 import { keyInfo, handsMarkup, fingerNames } from './fingering.js';
 import { createVoice, letterToSpeech } from './voice.js';
+import { createSfx } from './sfx.js';
+import { PINYIN } from './pinyin-data.js';
 import {
   BRAND,
   KEY_LESSONS,
@@ -28,6 +30,9 @@ import {
   complete,
   draw,
   parseProgress,
+  encodeProgress,
+  decodeProgress,
+  weeklySummary,
 } from './engine.js';
 const $ = s => document.querySelector(s),
   esc = s =>
@@ -45,13 +50,13 @@ const icons = {
   journey: '↗',
 };
 const nav = [
-  ['home', 'My Studio', '我的小天地'],
-  ['keys', 'Key Trails', '键盘小径'],
-  ['english', 'Story Garden', '英语故事花园'],
-  ['chinese', 'Word Atelier', '中文输入'],
-  ['packs', 'Little Surprises', '拆开小惊喜'],
-  ['collection', 'My Collection', '我的收藏'],
-  ['journey', 'My Journey', '成长足迹'],
+  ['home', '我的小天地', 'My Studio'],
+  ['keys', '键盘小径', 'Key Trails'],
+  ['english', '英语故事花园', 'Story Garden'],
+  ['chinese', '中文输入', 'Word Atelier'],
+  ['packs', '拆开小惊喜', 'Little Surprises'],
+  ['collection', '我的收藏', 'My Collection'],
+  ['journey', '成长足迹', 'My Journey'],
 ];
 let p = fresh(),
   saveWarning = '',
@@ -117,6 +122,7 @@ function toast(text) {
   toast.timer = setTimeout(() => $('#toast').classList.remove('visible'), 4200);
 }
 let voiceStatus = { state: 'ready', message: '声音已开启' };
+const sfx = createSfx(() => p.settings.sfx !== false);
 const voice = createVoice({
   settings: () => p.settings,
   onStatus: (state, message) => {
@@ -214,6 +220,10 @@ function startNow(id, storyIndex = null) {
     hintedKeys: 0,
     peek: false,
     wrongStreak: 0,
+    combo: 0,
+    bestCombo: 0,
+    showTranslation: l.kind === 'english' && l.mode === 'words',
+    showPinyin: true,
     feedback: '',
     finished: false,
     seed,
@@ -278,6 +288,8 @@ function handleInput(value, physical = true) {
     if (hintOn()) s.hintedKeys = (s.hintedKeys ?? 0) + matched;
     s.peek = false;
     s.wrongStreak = 0;
+    s.combo = (s.combo || 0) + matched;
+    s.bestCombo = Math.max(s.bestCombo || 0, s.combo);
   }
   if (wrong) {
     s.mistakes++;
@@ -285,7 +297,9 @@ function handleInput(value, physical = true) {
     s.errors[key] = (s.errors[key] || 0) + 1;
     s.feedback = 'wrong';
     s.wrongStreak = (s.wrongStreak || 0) + 1;
+    s.combo = 0;
     if (!s.hints && canHint(l) && s.wrongStreak >= 2) s.peek = true;
+    sfx('wrong');
   } else s.feedback = 'good';
   s.correct += matched;
   s.offset += matched;
@@ -297,9 +311,15 @@ function handleInput(value, physical = true) {
       finish();
       return;
     }
-    render();
+    sfx('task');
+    refreshTask();
     sayCurrent();
   } else {
+    const milestone = matched > 0 && [10, 25, 50, 100].some(n => s.combo >= n && s.combo - matched < n);
+    if (milestone) {
+      s.feedback = 'combo';
+      sfx('combo');
+    } else if (matched > 0) sfx('key');
     updateSession();
     if (l.kind === 'keys' && matched > 0) sayCurrent();
   }
@@ -330,8 +350,10 @@ function finish() {
     kind: l.kind,
     ime: !!l.ime,
     storyTitle: s.tasks[0]?.storyTitle || null,
+    bestCombo: s.bestCombo || 0,
   };
   r.hints = hintShare(r) > 0.2;
+  sfx('finish');
   const completed = complete(p, r);
   result = {
     ...r,
@@ -359,9 +381,9 @@ function button(label, action, extra = '', cls = 'primary') {
   return `<button class="${cls}" data-action="${action}" ${extra}>${label}</button>`;
 }
 const art = (card, extra = '') =>
-  `<div class="card-art ${extra}" role="img" aria-label="${esc(card.name)} 小猫插画" style="background-image:url('./public/art/tier-${card.tier}.png');background-position:${(card.index % 3) * 50}% ${(Math.floor(card.index / 3) * 100) / 3}%"></div>`;
+  `<div class="card-art ${extra}" role="img" aria-label="${esc(card.name)} 小猫插画" style="background-image:url('./public/art/tier-${card.tier}.webp');background-position:${(card.index % 3) * 50}% ${(Math.floor(card.index / 3) * 100) / 3}%"></div>`;
 function shell(body) {
-  return `<aside class="sidebar"><a class="brand" href="#home" data-action="nav" data-view="home"><img src="./public/favicon.svg" alt=""><span>Luna <i>&</i> Keys<small>A LITTLE EVERYDAY MAGIC</small></span></a><div class="nav-caption">YOUR LITTLE WORLD</div><nav>${nav.map(([id, title, sub]) => `<button data-action="nav" data-view="${id}" class="nav-item ${view === id || (view === 'session' && ((lesson()?.kind === 'english' && id === 'english') || (lesson()?.kind === 'chinese' && id === 'chinese') || (!['english', 'chinese'].includes(lesson()?.kind) && id === 'keys'))) ? 'active' : ''}"><span class="nav-icon">${icons[id]}</span><span>${title}<small>${sub}</small></span></button>`).join('')}</nav><div class="sidebar-note"><span>✧</span><h3>Little steps count.</h3><p>今天的一点点，<br>也值得好好收藏。</p></div><div class="sidebar-bottom">MADE FOR YOUR OWN PACE</div></aside><div class="main"><header class="topbar"><button class="mobile-menu" data-action="menu" aria-label="打开导航">☰</button><span class="breadcrumb">${view === 'session' ? 'A moment to practise' : nav.find(n => n[0] === view)?.[1] || 'My Studio'} <span> / ${view === 'session' ? '与 Luna 一起练习' : '每一小步，都算数'}</span></span><div class="top-actions"><button class="diamond-pill" data-action="nav" data-view="packs" aria-label="${p.diamonds} 钻石，查看卡包"><span>◇</span> ${p.diamonds}</button><button class="sound-button" data-action="sound" aria-label="${p.settings.sound ? '关闭' : '开启'}朗读">${p.settings.sound ? '♫' : '♪'}</button><span class="avatar">L</span></div></header>${saveWarning ? `<div class="save-warning" role="alert">${esc(saveWarning)}</div>` : ''}<main>${body}</main><footer>A little practice. A little magic. <span>Luna & Keys</span></footer></div>`;
+  return `<aside class="sidebar"><a class="brand" href="#home" data-action="nav" data-view="home"><img src="./public/favicon.svg" alt=""><span>Luna <i>&</i> Keys<small>A LITTLE EVERYDAY MAGIC</small></span></a><div class="nav-caption">YOUR LITTLE WORLD</div><nav>${nav.map(([id, title, sub]) => `<button data-action="nav" data-view="${id}" class="nav-item ${view === id || (view === 'session' && ((lesson()?.kind === 'english' && id === 'english') || (lesson()?.kind === 'chinese' && id === 'chinese') || (!['english', 'chinese'].includes(lesson()?.kind) && id === 'keys'))) ? 'active' : ''}"><span class="nav-icon">${icons[id]}</span><span>${title}<small>${sub}</small></span></button>`).join('')}</nav><div class="sidebar-note"><span>✧</span><h3>Little steps count.</h3><p>今天的一点点，<br>也值得好好收藏。</p></div><div class="sidebar-bottom">MADE FOR YOUR OWN PACE</div></aside><div class="main"><header class="topbar"><button class="mobile-menu" data-action="menu" aria-label="打开导航">☰</button><span class="breadcrumb">${view === 'session' ? '练习中' : nav.find(n => n[0] === view)?.[1] || '我的小天地'} <span> / ${view === 'session' ? '和 Luna 一起练习' : '每一小步，都算数'}</span></span><div class="top-actions"><button class="diamond-pill" data-action="nav" data-view="packs" aria-label="${p.diamonds} 钻石，查看卡包"><span>◇</span> ${p.diamonds}</button><button class="sound-button" data-action="sound" aria-label="${p.settings.sound ? '关闭' : '开启'}朗读">${p.settings.sound ? '♫' : '♪'}</button><span class="avatar">L</span></div></header>${saveWarning ? `<div class="save-warning" role="alert">${esc(saveWarning)}</div>` : ''}<main>${body}</main><footer>A little practice. A little magic. <span>Luna & Keys</span></footer></div>`;
 }
 function home() {
   const rec = recommendation(p),
@@ -369,26 +391,22 @@ function home() {
     count = Object.keys(p.cards).length;
   return (
     header(
-      'MAKE YOURSELF AT HOME',
-      'A little brighter, every day.',
+      'MY STUDIO',
+      '每天，亮一点点。',
       '一点点练习，一点点发现。Luna 在这里陪着你。',
-      `<span class="date-chip">${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · YOUR OWN PACE</span>`,
+      `<span class="date-chip">${new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })} · 按自己的节奏</span>`,
     ) +
-    `<section class="hero"><div class="hero-copy"><div class="soft-tag">MEET YOUR LITTLE COMPANION</div><h2>Small keys.<br>Lovely possibilities<span>.</span></h2><p>让手指熟悉新的小径，<br>让故事带你去更远的地方。</p>${button(s && !s.finished ? '继续刚才的练习 <span>↗</span>' : '和 Luna 开始今天 <span>↗</span>', s && !s.finished ? 'resume' : 'start', s && !s.finished ? '' : `data-id="${rec.id}"`)}<div class="hero-note">不用着急，准确比速度更重要。</div></div><img class="hero-cat" src="./public/art/hero.png" alt="白色小猫 Luna 陪着 F 和 J 键"><div class="hero-label"><span>✧</span> Your tiny cheerleader.</div></section><div class="home-summary"><div><span class="summary-icon rose">⌨</span><span><strong>${Math.min(today, 3)} <small>/ 3</small></strong><small>今天的小脚印</small></span><div class="dots">${[0, 1, 2].map(i => `<i class="${i < today ? 'filled' : ''}"></i>`).join('')}</div></div><div><span class="summary-icon lilac">◇</span><span><strong>${p.diamonds}</strong><small>攒下的小惊喜</small></span></div><div><span class="summary-icon sage">▧</span><span><strong>${count} <small>/ 36</small></strong><small>收藏的小伙伴</small></span></div></div><div class="section-title"><div><span class="eyebrow">A PATH FOR EVERY MOOD</span><h2>今天，想去哪里？</h2></div><span class="muted">跟着自己的节奏就好</span></div><div class="entry-grid"><button data-action="nav" data-view="keys" class="entry-card rose"><span class="entry-number">01 / FIND YOUR RHYTHM</span><div class="key-illustration"><kbd>F</kbd><span>✧</span><kbd>J</kbd></div><h3>Key Trails</h3><p>从两个键开始，让双手慢慢熟悉键盘。</p><span class="entry-bottom">键盘小径 <b>↗</b></span></button><button data-action="nav" data-view="english" class="entry-card lilac"><span class="entry-number">02 / A WORLD OF STORIES</span><div class="book-illustration">Aa<span>hello, little world.</span></div><h3>Story Garden</h3><p>认识几个词，读一句话，发现一个小故事。</p><span class="entry-bottom">英语故事花园 <b>↗</b></span></button><button data-action="nav" data-view="chinese" class="entry-card sage"><span class="entry-number">03 / 中文输入</span><div class="book-illustration zh-illustration">文<span>你好，小世界。</span></div><h3>Word Atelier</h3><p>用拼音输入法，打出词语、句子和小故事。</p><span class="entry-bottom">中文输入 <b>↗</b></span></button><button data-action="nav" data-view="packs" class="entry-card cream"><span class="entry-number">04 / SOMETHING TO KEEP</span><div class="mini-pack">◇<small>LUNA & KEYS</small></div><h3>Little Surprises</h3><p>用练习攒下的钻石，拆开一位新朋友。</p><span class="entry-bottom">拆开小惊喜 <b>↗</b></span></button></div><section class="next-step"><span class="tiny-spark">✧</span><div><small>YOUR NEXT LITTLE STEP</small><h3>${esc(rec.subtitle)}</h3><p>${esc(rec.goal)}</p></div>${button('去练一小段 ↗', 'start', `data-id="${rec.id}"`, 'secondary')}</section>`
+    `<section class="hero"><div class="hero-copy"><div class="soft-tag">MEET YOUR LITTLE COMPANION</div><h2>小小键盘，<br>大大的可能<span>。</span></h2><p>让手指熟悉新的小径，<br>让故事带你去更远的地方。</p>${button(s && !s.finished && lesson() ? `继续：${esc(lessonLabel(lesson()))} <span>↗</span>` : '和 Luna 开始今天 <span>↗</span>', s && !s.finished ? 'resume' : 'start', s && !s.finished ? '' : `data-id="${rec.id}"`)}<div class="hero-note">不用着急，准确比速度更重要。</div></div><img class="hero-cat" src="./public/art/hero.webp" width="900" height="900" decoding="async" alt="白色小猫 Luna 陪着 F 和 J 键"><div class="hero-label"><span>✧</span> 你的小小啦啦队</div></section><div class="notice device-note">打字练习需要电脑和实体键盘。用手机或平板时，可以先浏览课程、看看收藏。</div><div class="home-summary"><div><span class="summary-icon rose">⌨</span><span><strong>${Math.min(today, 3)} <small>/ 3</small></strong><small>今天的小脚印</small></span><div class="dots">${[0, 1, 2].map(i => `<i class="${i < today ? 'filled' : ''}"></i>`).join('')}</div></div><div><span class="summary-icon lilac">◇</span><span><strong>${p.diamonds}</strong><small>攒下的小惊喜</small></span></div><div><span class="summary-icon sage">▧</span><span><strong>${count} <small>/ 36</small></strong><small>收藏的小伙伴</small></span></div></div><div class="section-title"><div><span class="eyebrow">A PATH FOR EVERY MOOD</span><h2>今天，想去哪里？</h2></div><span class="muted">跟着自己的节奏就好</span></div><div class="entry-grid"><button data-action="nav" data-view="keys" class="entry-card rose"><span class="entry-number">01 / FIND YOUR RHYTHM</span><div class="key-illustration"><kbd>F</kbd><span>✧</span><kbd>J</kbd></div><h3>键盘小径</h3><p>从两个键开始，让双手慢慢熟悉键盘。</p><span class="entry-bottom">Key Trails <b>↗</b></span></button><button data-action="nav" data-view="english" class="entry-card lilac"><span class="entry-number">02 / A WORLD OF STORIES</span><div class="book-illustration">Aa<span>hello, little world.</span></div><h3>英语故事花园</h3><p>认识几个词，读一句话，发现一个小故事。</p><span class="entry-bottom">Story Garden <b>↗</b></span></button><button data-action="nav" data-view="chinese" class="entry-card sage"><span class="entry-number">03 / 中文输入</span><div class="book-illustration zh-illustration">文<span>你好，小世界。</span></div><h3>中文输入</h3><p>用拼音输入法，打出词语、句子和小故事。</p><span class="entry-bottom">Word Atelier <b>↗</b></span></button><button data-action="nav" data-view="packs" class="entry-card cream"><span class="entry-number">04 / SOMETHING TO KEEP</span><div class="mini-pack">◇<small>LUNA & KEYS</small></div><h3>拆开小惊喜</h3><p>用练习攒下的钻石，拆开一位新朋友。</p><span class="entry-bottom">Little Surprises <b>↗</b></span></button></div><section class="next-step"><span class="tiny-spark">✧</span><div><small>下一小步</small><h3>${esc(lessonLabel(rec))}</h3><p>${esc(rec.goal)}</p></div>${button('去练一小段 ↗', 'start', `data-id="${rec.id}"`, 'secondary')}</section>`
   );
 }
 function lessonTile(l) {
   const state = statusFor(p, l.id),
     today = p.daily[dayKey()]?.lessons.includes(l.id);
-  return `<button class="lesson-card" data-action="start" data-id="${l.id}"><div class="lesson-meta"><span>${l.kind === 'keys' ? String(l.index + 1).padStart(2, '0') : l.kind === 'test' ? 'CHECK-IN' : l.kind === 'edit' ? 'REAL-LIFE PRACTICE' : 'A LITTLE PRACTICE'}</span><span class="status ${state === '已熟练' ? 'stable' : ''}">${state}</span></div><h3>${esc(l.title)}</h3><h4>${esc(l.subtitle)}</h4><p>${esc(l.goal)}</p><div class="lesson-tail"><span>${today ? '再巩固一下 · 今日奖励已领取' : '开始练习'}</span><span>↗</span></div></button>`;
+  return `<button class="lesson-card" data-action="start" data-id="${l.id}"><div class="lesson-meta"><span>${l.kind === 'keys' ? '第 ' + (l.index + 1) + ' 课' : l.kind === 'test' ? '小检查' : l.kind === 'edit' ? '真实修改' : '练习'}</span><span class="status ${state === '已熟练' ? 'stable' : ''}">${state}</span></div><h3>${esc(l.subtitle)}</h3><h4>${esc(l.title)}</h4><p>${esc(l.goal)}</p><div class="lesson-tail"><span>${today ? '再巩固一下 · 今日奖励已领取' : '开始练习'}</span><span>↗</span></div></button>`;
 }
 function keysPage() {
   return (
-    header(
-      'LITTLE STEPS, STRONG FOUNDATIONS',
-      'Key Trails',
-      '从手指找到自己的位置开始。每次学一点，也复习一点。',
-    ) +
+    header('KEY TRAILS', '键盘小径', '从手指找到自己的位置开始。每次学一点，也复习一点。') +
     `<div class="notice">✧ 可以看键盘。先把左右食指放到 F 和 J 的凸点上，双手轻轻放松。</div>${[
       '起步',
       '向上探索',
@@ -405,7 +423,7 @@ function keysPage() {
       )
       .join(
         '',
-      )}<div class="section-title"><h2>A gentle check-in</h2><span class="muted">准备好了，再来看看自己的进步</span></div><div class="lesson-grid">${TEST_LESSONS.map(lessonTile).join('')}</div>`
+      )}<div class="section-title"><h2>小检查</h2><span class="muted">准备好了，再来看看自己的进步</span></div><div class="lesson-grid">${TEST_LESSONS.map(lessonTile).join('')}</div>`
   );
 }
 function articleLength(story, english) {
@@ -428,7 +446,7 @@ function courseTile(l) {
       : l.mode === 'sentences'
         ? u.sentences.length + ' 组短语与句子'
         : u.stories.length + ' 篇完整文章';
-  return `<button class="lesson-card course-card" data-action="start" data-id="${l.id}"><div class="lesson-meta"><span>CHAPTER ${String(l.chapter).padStart(2, '0')}</span><span class="status ${state === '已熟练' ? 'stable' : ''}">${state}</span></div><h3>${esc(u.title)}</h3><h4>${esc(u.subtitle)}</h4><p class="course-preview">${esc(l.mode === 'words' ? (isEnglish ? u.words.slice(0, 4).map(x => x[0]) : u.words.slice(0, 4)).join(' · ') : l.mode === 'sentences' ? (isEnglish ? u.sentences[4][0] : u.sentences[3]) : u.stories.map(x => x.title).join(' / '))}</p><div class="course-amount">${summary}${l.mode === 'story' ? ' · ' + u.stories.map(x => articleLength(x, isEnglish)).join(' / ') : ''}</div><div class="lesson-tail"><span>${gate ? `建议先完成键位前 ${gate.index + 1} 课` : today ? '继续练习 · 今日奖励已领取' : l.mode === 'story' ? '选一篇，开始读' : '开始这一关'}</span><span>↗</span></div></button>`;
+  return `<button class="lesson-card course-card" data-action="start" data-id="${l.id}"><div class="lesson-meta"><span>第 ${l.chapter} 关</span><span class="status ${state === '已熟练' ? 'stable' : ''}">${state}</span></div><h3>${esc(u.subtitle)}</h3>${isEnglish ? `<h4>${esc(u.title)}</h4>` : ''}<p class="course-preview">${esc(l.mode === 'words' ? (isEnglish ? u.words.slice(0, 4).map(x => x[0]) : u.words.slice(0, 4)).join(' · ') : l.mode === 'sentences' ? (isEnglish ? u.sentences[4][0] : u.sentences[3]) : u.stories.map(x => x.title).join(' / '))}</p><div class="course-amount">${summary}${l.mode === 'story' ? ' · ' + u.stories.map(x => articleLength(x, isEnglish)).join(' / ') : ''}</div><div class="lesson-tail"><span>${gate ? `建议先完成键位前 ${gate.index + 1} 课` : today ? '继续练习 · 今日奖励已领取' : l.mode === 'story' ? '选一篇，开始读' : '开始这一关'}</span><span>↗</span></div></button>`;
 }
 function languagePage(english) {
   const units = english ? ENGLISH_UNITS : CHINESE_UNITS,
@@ -437,8 +455,8 @@ function languagePage(english) {
     action = english ? 'english-mode' : 'chinese-mode';
   return (
     header(
-      english ? 'WORDS BECOME STORIES' : 'EVERY WORD HAS A PLACE',
-      english ? 'Story Garden' : 'Word Atelier',
+      english ? 'STORY GARDEN' : 'WORD ATELIER',
+      english ? '英语故事花园' : '中文输入',
       english ? '积累词汇，练习句子，再走进一篇完整的文章。' : '认识词语，写好句子，再读懂一个完整的故事。',
     ) +
     `${list.some(l => !gateOpen(p, l)) ? `<div class="notice">✧ 这里的词和句子会用到整个键盘。还在学键位的话，建议先走完键盘小径；已经会打字，点开任意一关就能直接开始。</div>` : ''}<div class="course-overview"><span>${units.length} 个主题关卡</span><span>${units.reduce((n, u) => n + u.stories.length, 0)} 篇${english ? '英语' : '中文'}文章</span><span>可以暂停，下次接着练</span></div><div class="learning-path">${[
@@ -466,6 +484,10 @@ function chinesePage() {
 }
 function keyboard() {
   const l = lesson();
+  if (l.ime)
+    return `<section class="keyboard-and-hands compact-tip"><span>用拼音输入法：先打拼音，再按数字或空格选字。上面的拼音可以帮你找到读音。</span></section>`;
+  if (l.kind === 'edit')
+    return `<section class="keyboard-and-hands compact-tip"><span>检查大小写、空格和标点，用退格改正，再按 Enter 提交。</span></section>`;
   const rows = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
     ['Tab', ...'qwertyuiop', '[', ']', '\\'],
@@ -475,22 +497,50 @@ function keyboard() {
   ];
   return `<section class="keyboard-and-hands"><div class="keyboard-toolbar"><span>键盘与双手 · 按完回到基准位置</span>${l.ime || l.kind === 'edit' ? '<span>双手回到基准位置</span>' : `<button data-action="hints" ${l.kind === 'test' ? 'disabled' : ''}>${s.hints ? '隐藏指法提示' : '显示指法提示'}</button>`}</div><div class="keyboard" aria-label="键盘位置提示">${rows.map(row => `<div class="key-row">${row.map(k => `<span data-key="${esc(k)}" class="key ${k.length > 1 ? 'control' : ''} ${k === ' ' ? 'space' : ''} ${k === 'f' || k === 'j' ? 'home-key' : ''}">${k === ' ' ? '空格' : k === 'Backspace' ? '⌫' : k.startsWith('Shift') ? 'SHIFT' : esc(k.toUpperCase())}</span>`).join('')}</div>`).join('')}</div>${handsMarkup()}</section>`;
 }
+function practiceMeta(l, t) {
+  return `<div class="practice-meta"><span>${esc(t.storyTitle || t.note || (l.kind === 'edit' ? '用退格修改，检查后按 Enter' : '慢慢看清，再轻轻输入'))}</span><span id="task-count"></span></div>`;
+}
+function typingArea(l, t) {
+  const pinyin = l.ime && PINYIN[t.text];
+  return `<div class="typing-area">${t.translation ? `<p class="translation ${s.showTranslation ? 'shown' : ''}">${esc(t.translation)}</p>` : ''}<div id="target-text" class="target-text ${t.text.length > 12 ? 'sentence' : ''} ${pinyin && s.showPinyin ? 'with-pinyin' : ''}" aria-label="请按顺序输入：${esc(t.text)}"></div><div class="typing-help"><div id="instruction" class="instruction" aria-live="polite"></div><div class="task-tools">${l.kind !== 'test' ? button('♫ 听一听', 'speak', '', 'text-button') : ''}${t.translation ? `<button class="text-button" data-action="translation">${s.showTranslation ? '收起意思' : '看看意思'}</button>` : ''}${pinyin ? `<button class="text-button" data-action="pinyin">${s.showPinyin ? '收起拼音' : '显示拼音'}</button>` : ''}</div></div>${l.ime ? '<input id="ime-input" class="typing-input" placeholder="在这里用拼音输入法选字" aria-label="中文输入" autocomplete="off" autocapitalize="off">' : ''}${l.kind === 'edit' ? `<input id="edit-input" class="typing-input" value="${esc(s.editText || '')}" placeholder="在这里输入，检查后按 Enter" aria-label="输入并修改句子" autocomplete="off" spellcheck="false" autocapitalize="off">` : ''}</div>`;
+}
+function companionCard() {
+  const c = CARDS.find(x => x.id === p.settings.companion && p.cards[x.id]);
+  return c
+    ? `<div id="practice-cat" class="companion-art">${art(c)}</div>`
+    : `<img id="practice-cat" src="./public/art/hero.webp" width="900" height="900" decoding="async" alt="Luna">`;
+}
 function sessionPage() {
   const l = lesson();
   if (!l || !current()) return '';
   const t = current();
-  return `<div class="session-toolbar"><div class="session-title">${button('← 返回', 'exit', '', 'text-button')}<h2>${esc(l.subtitle)}</h2></div><div class="session-metrics"><span>准确率 <strong id="accuracy">100<em>%</em></strong></span><span>${l.seconds ? '剩余' : '用时'} <strong id="timer">00:00</strong></span></div><div class="session-controls">${button('♫ 声音与试听', 'voice-settings', '', 'secondary small')}${button('Ⅱ 暂停', 'pause', '', 'secondary small')}</div></div><div class="practice-layout"><section class="practice-card"><div class="practice-meta"><span>${esc(t.storyTitle || t.note || (l.kind === 'edit' ? '用退格修改，检查后按 Enter' : '慢慢看清，再轻轻输入'))}</span><span id="task-count"></span></div><div class="progress-track"><i id="progress-fill"></i></div><div class="typing-area">${t.translation ? `<p class="translation ${s.showTranslation ? 'shown' : ''}">${esc(t.translation)}</p>` : ''}<div id="target-text" class="target-text ${t.text.length > 12 ? 'sentence' : ''}" aria-label="请按顺序输入：${esc(t.text)}"></div><div class="typing-help"><div id="instruction" class="instruction" aria-live="polite"></div><div class="task-tools">${l.kind !== 'test' ? button('♫ 听一听', 'speak', '', 'text-button') : ''}${t.translation ? `<button class="text-button" data-action="translation">${s.showTranslation ? '收起意思' : '看看意思'}</button>` : ''}</div></div>${l.ime ? '<input id="ime-input" class="typing-input" placeholder="在这里用拼音输入法选字" aria-label="中文输入" autocomplete="off" autocapitalize="off">' : ''}${l.kind === 'edit' ? `<input id="edit-input" class="typing-input" value="${esc(s.editText || '')}" placeholder="在这里输入，检查后按 Enter" aria-label="输入并修改句子" autocomplete="off" spellcheck="false" autocapitalize="off">` : ''}</div>${keyboard()}</section><div class="session-footnote"><div class="little-companion"><img id="practice-cat" src="./public/art/hero.png" alt="Luna"><p id="cat-bubble">慢慢来，我陪着你。</p></div><span class="voice-status" data-voice-status role="status"></span><button class="help-button" data-action="help">双手怎么放？ ↗</button></div></div>`;
+  return `<div class="session-toolbar"><div class="session-title">${button('← 返回', 'exit', '', 'text-button')}<h2>${esc(l.subtitle)}</h2></div><div class="session-metrics"><span>准确率 <strong id="accuracy">100<em>%</em></strong></span><span class="combo-metric">连击 <strong id="combo">0</strong></span><span>${l.seconds ? '剩余' : '用时'} <strong id="timer">00:00</strong></span></div><div class="session-controls">${button('♫ 声音', 'voice-settings', '', 'secondary small')}${button('Ⅱ 暂停', 'pause', '', 'secondary small')}</div></div><div class="practice-layout"><section class="practice-card">${practiceMeta(l, t)}<div class="progress-track"><i id="progress-fill"></i></div>${typingArea(l, t)}${keyboard()}</section><div class="session-footnote"><div class="little-companion">${companionCard()}<p id="cat-bubble">慢慢来，我陪着你。</p></div><span class="voice-status" data-voice-status role="status"></span><button class="help-button" data-action="help">双手怎么放？ ↗</button></div></div>`;
+}
+/** Swap only the text area when moving to the next item, so the keyboard and hands never flicker. */
+function refreshTask() {
+  const l = lesson(),
+    t = current();
+  if (view !== 'session' || result || !t || !$('.typing-area')) return render();
+  $('.practice-meta').outerHTML = practiceMeta(l, t);
+  $('.typing-area').outerHTML = typingArea(l, t);
+  updateSession();
+  const input = $('#ime-input') || $('#edit-input');
+  input?.focus({ preventScroll: true });
 }
 function updateSession() {
   if (view !== 'session' || result || !s) return;
   const l = lesson(),
     t = current();
   if (!t || !$('#target-text')) return;
+  const syllables = l.ime && s.showPinyin && PINYIN[t.text] ? PINYIN[t.text].split(' ') : null;
   $('#target-text').innerHTML = [...t.text]
-    .map(
-      (c, i) =>
-        `<span class="${i < s.offset ? 'typed' : i === s.offset ? 'current' : ''}">${c === ' ' ? '␣' : esc(c)}</span>`,
-    )
+    .map((c, i) => {
+      const cls = i < s.offset ? 'typed' : i === s.offset ? 'current' : '';
+      const glyph = c === ' ' ? '␣' : esc(c);
+      return syllables?.[i]
+        ? `<ruby class="${cls}">${glyph}<rt>${esc(syllables[i])}</rt></ruby>`
+        : `<span class="${cls}">${glyph}</span>`;
+    })
     .join('');
   $('#task-count').textContent = l.seconds
     ? `${l.seconds} 秒小检查`
@@ -501,29 +551,42 @@ function updateSession() {
       : ((s.task + s.offset / t.text.length) / s.tasks.length) * 100) + '%';
   const k = keyInfo(t.text[s.offset] || '');
   $('#instruction').textContent =
-    s.feedback === 'wrong' && !s.peek
-      ? '没关系，看看当前位置，再试一下。'
-      : l.ime
-        ? '用中文输入法选字，确认后继续。'
-        : l.kind === 'edit'
-          ? '打错可以退格，检查后按 Enter。'
-          : hintOn()
-            ? s.peek && !s.hints
-              ? 'Luna 提醒你：' + k.name
-              : k.name
-            : '试着自己找到下一个键。';
+    s.feedback === 'wrong' && s.caps
+      ? '大写锁定（Caps Lock）开着，先按一下它关掉，再继续。'
+      : s.feedback === 'wrong' && !s.peek
+        ? '没关系，看看当前位置，再试一下。'
+        : l.ime
+          ? '用中文输入法选字，确认后继续。'
+          : l.kind === 'edit'
+            ? '打错可以退格，检查后按 Enter。'
+            : hintOn()
+              ? s.peek && !s.hints
+                ? 'Luna 提醒你：' + k.name
+                : k.name
+              : '试着自己找到下一个键。';
   $('#instruction').classList.toggle('error', s.feedback === 'wrong');
   $('#accuracy').innerHTML =
     (s.correct + s.mistakes ? Math.round((s.correct / (s.correct + s.mistakes)) * 100) : 100) + '<em>%</em>';
+  if ($('#combo')) {
+    $('#combo').textContent = s.combo || 0;
+    $('.combo-metric').classList.toggle('hot', (s.combo || 0) >= 10);
+  }
   $('#cat-bubble').textContent =
-    s.feedback === 'wrong'
-      ? '不用着急，再看看那个键。'
-      : s.feedback === 'celebrate'
-        ? '又完成一小段，做得好！'
-        : s.feedback === 'good'
-          ? '就是这样，保持自己的节奏。'
-          : '慢慢来，我陪着你。';
-  $('#practice-cat').classList.toggle('happy', s.feedback === 'celebrate');
+    s.feedback === 'combo'
+      ? `连续 ${s.combo} 个都对了，太稳了！`
+      : s.feedback === 'wrong'
+        ? '不用着急，再看看那个键。'
+        : s.feedback === 'celebrate'
+          ? '又完成一小段，做得好！'
+          : s.feedback === 'good'
+            ? '就是这样，保持自己的节奏。'
+            : '慢慢来，我陪着你。';
+  const cat = $('#practice-cat');
+  cat.classList.remove('happy', 'oops');
+  void cat.offsetWidth; // restart the reaction animation
+  if (s.feedback === 'celebrate' || s.feedback === 'combo') cat.classList.add('happy');
+  if (s.feedback === 'wrong') cat.classList.add('oops');
+  $('.combo-metric')?.classList.toggle('pop', s.feedback === 'combo');
   document
     .querySelectorAll('[data-key]')
     .forEach(el =>
@@ -544,9 +607,18 @@ function updateHands() {
   document
     .querySelectorAll('[data-finger]')
     .forEach(el => el.classList.toggle('active', show && k.fingers.includes(Number(el.dataset.finger))));
-  document
-    .querySelectorAll('[data-finger-label]')
-    .forEach(el => el.classList.toggle('active', show && k.fingers.includes(Number(el.dataset.fingerLabel))));
+  document.querySelectorAll('[data-finger-label]').forEach(el => {
+    const id = Number(el.dataset.fingerLabel),
+      on = show && k.fingers.includes(id);
+    el.classList.toggle('active', on);
+    el.textContent = !on
+      ? el.dataset.defaultLabel
+      : k.shift && id === k.shiftFinger
+        ? '⇧'
+        : k.base === ' '
+          ? '␣'
+          : keyName(k.base);
+  });
   if (!$('#finger-caption')) return;
   $('#finger-caption').textContent = show
     ? k.base === ' '
@@ -618,13 +690,13 @@ function resultPage() {
     '',
     retry || !nextButton ? 'primary' : 'secondary',
   );
-  return `<section class="result-page"><div class="result-paw">✧</div><span class="eyebrow">A LITTLE MORE CONFIDENT</span><h1>${retry ? '再练一次，会更稳。' : '这一次，又向前了一点。'}</h1><p>${esc(l.title)} · ${esc(l.subtitle)}</p><div class="result-numbers"><div><b>${result.accuracy}%</b><span>准确率</span></div><div><b>${result.cpm}</b><span>${unit} / 分钟</span></div><div><b>${result.seconds}s</b><span>练习时长 · ${result.correct} ${l.ime ? '个字与标点' : '个正确字符'}</span></div><div><b>+${result.reward}</b><span>获得钻石</span></div></div>${compare ? `<p class="result-compare">${compare} ↗</p>` : ''}<div class="result-message">${message}${independent !== null ? ` <span class="result-independent">独立按键 ${independent}%</span>` : ''}</div>${weak.length ? `<div class="weak-keys"><span>这次容易按错</span>${weak.map(([k, n]) => `<kbd>${esc(keyName(k))}</kbd><small>×${n}</small>`).join('')}<span class="muted">${l.kind === 'keys' ? '下一组练习会多安排这些键' : '下次留意这些地方'}</span></div>` : ''}${result.breakdown.length ? `<div class="reward-breakdown">${result.breakdown.map(([name, n]) => `<span>${name} <b>+${n} ◇</b></span>`).join('')}</div>` : '<p class="muted">今天这课的奖励已经领取，复习的进步同样值得收藏。</p>'}${!result.saved ? `<div class="save-warning">成绩还没有保存成功。${button('再试一次', 'retry-save', '', 'secondary')}</div>` : ''}${result.quiz ? `<section class="quiz"><span class="eyebrow">ONE LITTLE THOUGHT</span><h3>${esc(result.quiz.question)}</h3><div>${result.quiz.options.map((o, i) => `<button data-action="quiz" data-index="${i}" ${result.quizDone ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div><p id="quiz-feedback" role="status">${result.quizDone ? '你找到了文章里的线索。' : ''}</p></section>` : ''}<div class="result-actions">${retry ? again + nextButton : nextButton + again}</div><div class="result-links">${result.progress.diamonds >= POOLS[0].cost ? button(`拆开小惊喜 · ◇ ${result.progress.diamonds}`, 'nav', 'data-view="packs"', 'text-button') : ''}${button('回到我的小天地', 'nav', 'data-view="home"', 'text-button')}</div></section>`;
+  return `<section class="result-page"><div class="result-paw">✧</div><span class="eyebrow">练习完成</span><h1>${retry ? '再练一次，会更稳。' : '这一次，又向前了一点。'}</h1><p>${esc(l.title)} · ${esc(l.subtitle)}</p><div class="result-numbers"><div><b>${result.accuracy}%</b><span>准确率</span></div><div><b>${result.cpm}</b><span>${unit} / 分钟</span></div><div><b>${result.seconds}s</b><span>练习时长 · ${result.correct} ${l.ime ? '个字与标点' : '个正确字符'}</span></div><div><b>+${result.reward}</b><span>获得钻石</span></div></div>${compare ? `<p class="result-compare">${compare} ↗</p>` : ''}<div class="result-message">${message}${independent !== null ? ` <span class="result-independent">独立按键 ${independent}%</span>` : ''}</div>${weak.length ? `<div class="weak-keys"><span>这次容易按错</span>${weak.map(([k, n]) => `<kbd>${esc(keyName(k))}</kbd><small>×${n}</small>`).join('')}<span class="muted">${l.kind === 'keys' ? '下一组练习会多安排这些键' : '下次留意这些地方'}</span></div>` : ''}${result.breakdown.length ? `<div class="reward-breakdown">${result.breakdown.map(([name, n]) => `<span>${name} <b>+${n} ◇</b></span>`).join('')}</div>` : '<p class="muted">今天这课的奖励已经领取，复习的进步同样值得收藏。</p>'}${!result.saved ? `<div class="save-warning">成绩还没有保存成功。${button('再试一次', 'retry-save', '', 'secondary')}</div>` : ''}${result.quiz ? `<section class="quiz"><span class="eyebrow">ONE LITTLE THOUGHT</span><h3>${esc(result.quiz.question)}</h3><div>${result.quiz.options.map((o, i) => `<button data-action="quiz" data-index="${i}" ${result.quizDone ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div><p id="quiz-feedback" role="status">${result.quizDone ? '你找到了文章里的线索。' : ''}</p></section>` : ''}<div class="result-actions">${retry ? again + nextButton : nextButton + again}</div><div class="result-links">${result.progress.diamonds >= POOLS[0].cost ? button(`拆开小惊喜 · ◇ ${result.progress.diamonds}`, 'nav', 'data-view="packs"', 'text-button') : ''}${button('回到我的小天地', 'nav', 'data-view="home"', 'text-button')}</div></section>`;
 }
 function packsPage() {
   return (
     header(
-      'A LITTLE SOMETHING, JUST FOR YOU',
-      'Little Surprises',
+      'LITTLE SURPRISES',
+      '拆开小惊喜',
       '练习攒下的每一颗钻石，都藏着一个小惊喜。',
       `<div class="wallet"><span>◇</span><b>${p.diamonds}</b><small>你的钻石</small></div>`,
     ) +
@@ -633,7 +705,7 @@ function packsPage() {
       return `<article class="pool-card ${pool.color}"><div class="pool-top"><span>SERIES 0${pool.tier}</span><span>${owned} / 12</span></div><div class="foil-pack tier-${pool.tier}"><div class="pack-seal"></div><small>LUNA & KEYS</small><span class="pack-symbol">${pool.tier === 1 ? '❀' : pool.tier === 2 ? '✿' : '☾'}</span><b>${pool.title}</b><span class="pack-caption">A LITTLE FRIEND INSIDE</span><div class="pack-seal bottom"></div></div><h2>${pool.title}</h2><p>${pool.subtitle} · ${['柔和插画', '细腻珠光', '月光镭射'][pool.tier - 1]}</p><div class="pool-price">◇ <b>${pool.cost}</b><small>钻石 / 包</small></div>${button(owned === 12 ? '这个系列已集齐 ✓' : p.diamonds < pool.cost ? `还差 ${pool.cost - p.diamonds} 钻石` : '选这个小惊喜 ↗', 'draw', `data-tier="${pool.tier}" ${owned === 12 || p.diamonds < pool.cost ? 'disabled' : ''}`)}<button class="text-button" data-action="pool-preview" data-tier="${pool.tier}">看看这个系列</button></article>`;
     }).join(
       '',
-    )}</div><div class="pack-rules"><div><span>01</span><h3>一包，一位新朋友</h3><p>每包得到对应系列的一张卡，集齐前不会重复。</p></div><div><span>02</span><h3>慢慢攒，也可以</h3><p>三个系列自由选择。钻石没有期限，不用赶时间。</p></div><div><span>03</span><h3>把努力变成惊喜</h3><p>每 10 次有效按键约得 1 颗钻石，一课 5–30 颗。第一次完成、打得准确，还有额外奖励。</p></div></div>`
+    )}</div><div class="pack-rules"><div><span>01</span><h3>一包，一位新朋友</h3><p>每包得到对应系列的一张卡，集齐前不会重复。收到的伙伴可以陪你一起练习。</p></div><div><span>02</span><h3>慢慢攒，也可以</h3><p>三个系列自由选择。钻石没有期限，不用赶时间。</p></div><div><span>03</span><h3>把努力变成惊喜</h3><p>每 10 次有效按键约得 1 颗钻石，一课 5–30 颗。第一次完成、打得准确，还有额外奖励。</p></div></div>`
   );
 }
 function collectionPage() {
@@ -642,15 +714,15 @@ function collectionPage() {
   );
   return (
     header(
-      'SMALL THINGS, LOVELY MEMORIES',
-      'My Collection',
+      'MY COLLECTION',
+      '我的收藏',
       '把遇见的小伙伴，一张一张好好收藏。',
-      `<span class="collection-count">${Object.keys(p.cards).length}<small> / 36 FRIENDS</small></span>`,
+      `<span class="collection-count">${Object.keys(p.cards).length}<small> / 36 位伙伴</small></span>`,
     ) +
     `<div class="collection-filters"><div class="mode-tabs">${[[0, '全部伙伴'], ...POOLS.map(x => [x.tier, x.subtitle])].map(([i, t]) => `<button data-action="collection-tier" data-tier="${i}" class="${collectionTier === i ? 'active' : ''}">${t}</button>`).join('')}</div><button class="secondary small ${favorites ? 'selected' : ''}" data-action="favorites">${favorites ? '♥' : '♡'} 我的心选</button></div><div class="collection-grid">${list
       .map(c => {
         const own = p.cards[c.id];
-        return `<button class="collectible tier-${c.tier} ${own ? 'owned' : 'unowned'}" data-action="card" data-id="${c.id}"><div class="collection-art-wrap">${art(c)}${own ? '' : `<span class="card-lock"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>尚未解锁</span>`}</div><div class="card-label"><small>No. ${c.number} <span>${own?.favorite ? '♥' : `TIER ${['I', 'II', 'III'][c.tier - 1]}`}</span></small><h3>${esc(c.name)}</h3><p>${own ? '已收入收藏册' : '在 ' + POOLS[c.tier - 1].subtitle + ' 中遇见'}</p></div></button>`;
+        return `<button class="collectible tier-${c.tier} ${own ? 'owned' : 'unowned'}" data-action="card" data-id="${c.id}"><div class="collection-art-wrap">${art(c)}${own ? '' : `<span class="card-lock"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>尚未解锁</span>`}</div><div class="card-label"><small>No. ${c.number} <span>${own?.favorite ? '♥' : ['普通', '珠光', '镭射'][c.tier - 1]}</span></small><h3>${esc(c.zh)}</h3><p>${own ? (p.settings.companion === c.id ? '正在陪你练习' : esc(c.name)) : '在「' + POOLS[c.tier - 1].subtitle + '」中遇见'}</p></div></button>`;
       })
       .join(
         '',
@@ -662,8 +734,8 @@ function journeyPage() {
     stable = Object.values(p.skills).filter(v => v.stable >= 2).length;
   return (
     header(
-      'YOUR OWN KIND OF PROGRESS',
-      'My Journey',
+      'MY JOURNEY',
+      '成长足迹',
       '看看走过的小径。只和昨天的自己比。',
       button('练习设置', 'settings', '', 'secondary'),
     ) +
@@ -696,7 +768,7 @@ function journeyPage() {
           .sort((a, b) => b[1] - a[1])
           .slice(0, 6);
       return `<section class="chart-panel speed-panel"><h2>越来越顺手</h2><p>最近十次键盘练习的速度（字符 / 分钟）。速度不设门槛，只和自己比。</p><div class="chart">${sp.map(r => `<div class="bar-column"><small>${r.cpm}</small><i style="height:${Math.max(3, (r.cpm / max) * 130)}px"></i><span>${new Date(r.date).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })}</span></div>`).join('') || '<p class="muted">完成一节键盘练习，就能看到自己的速度。</p>'}</div>${weak.length ? `<div class="weak-keys"><span>最需要多练的键</span>${weak.map(([k, n]) => `<kbd>${esc(keyName(k))}</kbd><small>×${n}</small>`).join('')}<span class="muted">键位练习会自动多安排这些键</span></div>` : ''}</section>`;
-    })()}<section class="history"><div class="section-title"><h2>Little footprints</h2><span class="muted">最近二十次</span></div><div class="table-scroll"><table><thead><tr><th>练习</th><th>准确率</th><th>输入 / 分钟</th><th>提示</th><th>钻石</th></tr></thead><tbody>${records
+    })()}<section class="history"><div class="section-title"><h2>最近的练习</h2><span class="muted">最近二十次</span></div><div class="table-scroll"><table><thead><tr><th>练习</th><th>准确率</th><th>输入 / 分钟</th><th>提示</th><th>钻石</th></tr></thead><tbody>${records
       .slice(0, 20)
       .map(
         r =>
@@ -704,8 +776,23 @@ function journeyPage() {
       )
       .join(
         '',
-      )}</tbody></table></div></section><section class="backup-panel"><div><span class="eyebrow">KEEP YOUR LITTLE WORLD</span><h2>把成长装进口袋</h2><p>换电脑前带上一份备份，下次还能接着练。</p></div><div>${button('导出存档 ↓', 'export', '', 'secondary')}${button('恢复存档 ↑', 'import', '', 'text-button')}${button('找回恢复前的记录', 'undo-import', '', 'text-button')}<input type="file" id="import-file" accept="application/json,.json" hidden></div></section>`
+      )}</tbody></table></div></section>${parentReport()}<section class="backup-panel"><div><span class="eyebrow">KEEP YOUR LITTLE WORLD</span><h2>把成长装进口袋</h2><p>换电脑时，复制“进度码”发给自己，在另一台电脑上粘贴就能接着练。也可以导出备份文件。</p></div><div>${button('复制进度码', 'copy-code', '', 'secondary')}${button('粘贴进度码', 'paste-code', '', 'secondary')}${button('导出存档 ↓', 'export', '', 'text-button')}${button('恢复存档 ↑', 'import', '', 'text-button')}${button('找回恢复前的记录', 'undo-import', '', 'text-button')}<input type="file" id="import-file" accept="application/json,.json" hidden></div></section>`
   );
+}
+function parentReport() {
+  const w = weeklySummary(p),
+    max = Math.max(1, ...w.perDay.map(d => d.minutes));
+  return `<section class="chart-panel parent-report"><div class="section-title"><div><span class="eyebrow">FOR PARENTS & TEACHERS</span><h2>给家长看的一周小结</h2></div>${button('打印 / 保存为 PDF', 'print', '', 'secondary small')}</div><div class="journey-summary">${[
+    [w.minutes, '本周练习分钟'],
+    [`${w.activeDays} / 7`, '练习天数'],
+    [w.accuracy === null ? '—' : w.accuracy + '%', '平均准确率'],
+    [w.cpm === null ? '—' : w.cpm, '平均速度（字符/分钟）'],
+    [`${w.keyLessonsPassed} / ${KEY_LESSONS.length}`, '已通过键位课'],
+  ]
+    .map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`)
+    .join(
+      '',
+    )}</div><div class="chart week-chart">${w.perDay.map(d => `<div class="bar-column"><small>${d.minutes}′</small><i style="height:${Math.max(3, (d.minutes / max) * 110)}px"></i><span>${Number(d.day.slice(5, 7))}/${Number(d.day.slice(8))}</span></div>`).join('')}</div><p class="report-note">${w.runs ? `本周完成 ${w.runs} 次练习。` : '本周还没有练习记录。'}${w.weak.length ? `最常按错的键：${w.weak.map(keyName).join('、')}，键位课会自动多安排这些键。` : ''}建议每天 10–20 分钟，准确率稳定在 90% 以上再追求速度。</p></section>`;
 }
 function overlays() {
   if (view === 'session' && s?.paused && !result && !modal)
@@ -713,12 +800,12 @@ function overlays() {
   if (!modal) return '';
   let content = '';
   if (modal.type === 'onboard' || modal.type === 'settings')
-    content = `<span class="modal-symbol">✧</span><div class="eyebrow">MAKE THIS SPACE YOURS</div><h2>${modal.type === 'onboard' ? 'Hello, I’m Luna.' : '找到舒服的节奏。'}</h2><p>从两个键开始。认识词语，写好句子，慢慢读懂完整的故事。</p><div class="welcome-path"><span>词汇积累</span><b>→</b><span>短语与句子</span><b>→</b><span>文章阅读</span></div><label class="setting-toggle"><input id="default-hints" type="checkbox" ${p.settings.hints ? 'checked' : ''}> 开始练习时显示双手指法提示</label><p class="small-note">先跟着指尖标记练。打得准了，Luna 会慢慢收起提示。</p><label class="setting-toggle"><input id="confident" type="checkbox" ${p.settings.confident ? 'checked' : ''}> 我已经会用键盘打字，英语和中文课不用等键位课</label>${button(modal.type === 'onboard' ? '这是我的小天地 →' : '保存设置', 'welcome')}`;
+    content = `<span class="modal-symbol">✧</span><div class="eyebrow">MAKE THIS SPACE YOURS</div><h2>${modal.type === 'onboard' ? '你好，我是 Luna。' : '找到舒服的节奏。'}</h2><p>从两个键开始。认识词语，写好句子，慢慢读懂完整的故事。</p><div class="welcome-path"><span>词汇积累</span><b>→</b><span>短语与句子</span><b>→</b><span>文章阅读</span></div><label class="setting-toggle"><input id="default-hints" type="checkbox" ${p.settings.hints ? 'checked' : ''}> 开始练习时显示双手指法提示</label><p class="small-note">先跟着指尖标记练。打得准了，Luna 会慢慢收起提示。</p><label class="setting-toggle"><input id="confident" type="checkbox" ${p.settings.confident ? 'checked' : ''}> 我已经会用键盘打字，英语和中文课不用等键位课</label><label class="setting-toggle"><input id="sfx" type="checkbox" ${p.settings.sfx !== false ? 'checked' : ''}> 按键音效（按对、按错、完成时的小声音）</label>${button(modal.type === 'onboard' ? '这是我的小天地 →' : '保存设置', 'welcome')}`;
   if (modal.type === 'article-picker') {
     const l = LESSONS.find(x => x.id === modal.id),
       u = courseUnit(l),
       english = l.kind === 'english';
-    content = `<div class="eyebrow">CHAPTER ${String(l.chapter).padStart(2, '0')}</div><h2>${esc(u.subtitle)}</h2><p>今天想读哪一篇？可以分几次完成。</p><div class="article-options">${u.stories.map((story, i) => `<button data-action="start-story" data-id="${l.id}" data-index="${i}"><small>ARTICLE 0${i + 1} · ${articleLength(story, english)}${p.records.some(r => r.lessonId === l.id && r.storyTitle === story.title) ? ' · 已读过' : ''}</small><h3>${esc(story.title)}</h3><p>${esc(story.text[0])}</p><span>读这一篇 →</span></button>`).join('')}</div>`;
+    content = `<div class="eyebrow">第 ${l.chapter} 关</div><h2>${esc(u.subtitle)}</h2><p>今天想读哪一篇？可以分几次完成。</p><div class="article-options">${u.stories.map((story, i) => `<button data-action="start-story" data-id="${l.id}" data-index="${i}"><small>第 ${i + 1} 篇 · ${articleLength(story, english)}${p.records.some(r => r.lessonId === l.id && r.storyTitle === story.title) ? ' · 已读过' : ''}</small><h3>${esc(story.title)}</h3><p>${esc(story.text[0])}</p><span>读这一篇 →</span></button>`).join('')}</div>`;
   }
   if (modal.type === 'voice') {
     const voices = voice.list('en-US');
@@ -738,13 +825,17 @@ function overlays() {
   if (modal.type === 'card') {
     const c = CARDS.find(x => x.id === modal.id),
       own = p.cards[c.id];
-    content = `<div class="detail-card tier-${c.tier} ${own ? '' : 'locked-detail'}">${art(c)}<small>No. ${c.number} · ${POOLS[c.tier - 1].title}</small><h2>${esc(c.name)}</h2></div>${own ? `<p>相遇于 ${new Date(own.date).toLocaleDateString('zh-CN')}</p>${button(own.favorite ? '♥ 已加入心选' : '♡ 放进我的心选', 'favorite', `data-id="${c.id}"`, 'secondary')}` : `<p>这位小伙伴藏在「${POOLS[c.tier - 1].subtitle}」中。</p>${button('去解锁这位伙伴', 'nav', 'data-view="packs"')}`}`;
+    content = `<div class="detail-card tier-${c.tier} ${own ? '' : 'locked-detail'}">${art(c)}<small>No. ${c.number} · ${POOLS[c.tier - 1].subtitle} · ${esc(c.name)}</small><h2>${esc(c.zh)}</h2></div>${own ? `<p class="card-story">${esc(c.story)}</p><p>相遇于 ${new Date(own.date).toLocaleDateString('zh-CN')}</p><div class="modal-actions">${p.settings.companion === c.id ? button('✓ 正在陪你练习', 'companion', `data-id=""`, 'secondary') : button('请它陪我练习', 'companion', `data-id="${c.id}"`)}${button(own.favorite ? '♥ 已加入心选' : '♡ 放进我的心选', 'favorite', `data-id="${c.id}"`, 'secondary')}</div>` : `<p>这位小伙伴藏在「${POOLS[c.tier - 1].subtitle}」中。</p>${button('去解锁这位伙伴', 'nav', 'data-view="packs"')}`}`;
   }
+  if (modal.type === 'code-copy')
+    content = `<div class="eyebrow">PROGRESS CODE</div><h2>你的进度码</h2><p>已经复制好了。把它发给自己（微信、邮件都可以），在另一台电脑的「成长足迹 → 粘贴进度码」里粘贴。</p><textarea id="code-text" class="code-box" readonly rows="5">${esc(modal.code)}</textarea>${button('再复制一次', 'copy-again')}`;
+  if (modal.type === 'code-paste')
+    content = `<div class="eyebrow">PROGRESS CODE</div><h2>粘贴进度码</h2><p>把另一台电脑上复制的进度码粘贴到这里。</p><textarea id="code-input" class="code-box" rows="5" placeholder="LK1.…"></textarea>${button('读取进度码', 'read-code')}`;
   if (modal.type === 'restore')
     content = `<h2>带回这份成长记录？</h2><p>这份存档有 ${modal.progress.diamonds} 钻石、${Object.keys(modal.progress.cards).length} 位小伙伴。</p><p>恢复会替换当前进度。当前存档会先自动备份在这台浏览器里。</p>${button('恢复这份存档', 'confirm-import')}${button('保留当前进度', 'close', '', 'secondary')}`;
   if (modal.type === 'pack') {
     const c = modal.card;
-    content = `<div class="eyebrow">SOMETHING LOVELY IS INSIDE</div><h2>${packStage === 'reveal' ? 'Hello, little friend.' : '拆开一份小惊喜。'}</h2><div class="opening-stage ${packStage}"><div class="opening-wrapper"><div class="foil-pack tier-${c.tier}"><div class="tear-strip"></div><small>LUNA & KEYS</small><span class="pack-symbol">☾</span><b>${POOLS[c.tier - 1].title}</b><span class="pack-caption">A LITTLE FRIEND INSIDE</span></div></div><div class="revealed-card tier-${c.tier}">${art(c)}<small>NEW FRIEND · No. ${c.number}</small><h3>${esc(c.name)}</h3></div></div>${packStage === 'reveal' ? `<p>已经为你放进收藏册了。</p><div class="modal-actions">${button(s && !s.finished ? '继续刚才的练习 →' : '继续练习 →', 'continue')}${button('看看我的收藏 ↗', 'nav', 'data-view="collection"', 'secondary')}</div>` : button('跳过动画', 'skip-pack', '', 'text-button')}`;
+    content = `<div class="eyebrow">SOMETHING LOVELY IS INSIDE</div><h2>${packStage === 'reveal' ? '你好，新朋友！' : '拆开一份小惊喜。'}</h2><div class="opening-stage ${packStage}"><div class="opening-wrapper"><div class="foil-pack tier-${c.tier}"><div class="tear-strip"></div><small>LUNA & KEYS</small><span class="pack-symbol">☾</span><b>${POOLS[c.tier - 1].title}</b><span class="pack-caption">A LITTLE FRIEND INSIDE</span></div></div><div class="revealed-card tier-${c.tier}">${art(c)}<small>新朋友 · No. ${c.number}</small><h3>${esc(c.zh)}</h3><p class="card-story">${esc(c.story)}</p></div></div>${packStage === 'reveal' ? `<p>已经放进收藏册了。打开卡片，可以请它陪你练习。</p><div class="modal-actions">${button(s && !s.finished ? '继续刚才的练习 →' : '继续练习 →', 'continue')}${button('看看我的收藏 ↗', 'nav', 'data-view="collection"', 'secondary')}</div>` : button('跳过动画', 'skip-pack', '', 'text-button')}`;
   }
   return `<div class="overlay"><section role="dialog" aria-modal="true" aria-label="${modal.type === 'pack' ? '打开卡包' : 'Luna & Keys'}" class="modal ${modal.type === 'pack' ? 'pack-modal' : ''}">${(modal.type !== 'pack' || packStage === 'reveal') && modal.type !== 'onboard' ? '<button class="modal-close" data-action="close" aria-label="关闭">×</button>' : ''}${content}</section></div>`;
 }
@@ -844,7 +935,13 @@ document.addEventListener('click', e => {
   }
   if (a === 'translation') {
     s.showTranslation = !s.showTranslation;
-    render();
+    refreshTask();
+    draft();
+  }
+  if (a === 'pinyin') {
+    s.showPinyin = !s.showPinyin;
+    refreshTask();
+    draft();
   }
   if (a === 'speak') sayCurrent(true);
   if (a === 'english-mode') {
@@ -875,7 +972,12 @@ document.addEventListener('click', e => {
     save({
       ...p,
       onboarded: true,
-      settings: { ...p.settings, hints: $('#default-hints').checked, confident: !!$('#confident')?.checked },
+      settings: {
+        ...p.settings,
+        hints: $('#default-hints').checked,
+        confident: !!$('#confident')?.checked,
+        sfx: !!$('#sfx')?.checked,
+      },
     });
     modal = null;
     render();
@@ -950,6 +1052,11 @@ document.addEventListener('click', e => {
     modal = { type: 'card', id: b.dataset.id };
     render();
   }
+  if (a === 'companion') {
+    save({ ...p, settings: { ...p.settings, companion: b.dataset.id || null } });
+    toast(b.dataset.id ? '好的，下次练习它会陪着你。' : '换回 Luna 陪你练习。');
+    render();
+  }
   if (a === 'favorite') {
     const next = structuredClone(p);
     next.cards[b.dataset.id].favorite = !next.cards[b.dataset.id].favorite;
@@ -979,6 +1086,34 @@ document.addEventListener('click', e => {
       toast('暂时无法读取这份记录。');
     }
   }
+  if (a === 'print') window.print();
+  if (a === 'copy-code')
+    encodeProgress(p).then(code => {
+      navigator.clipboard?.writeText(code).catch(() => {});
+      modal = { type: 'code-copy', code };
+      render();
+      $('#code-text')?.select();
+    });
+  if (a === 'copy-again') {
+    $('#code-text').select();
+    navigator.clipboard?.writeText(modal.code).then(
+      () => toast('进度码已复制。'),
+      () => toast('请手动选中并复制。'),
+    );
+  }
+  if (a === 'paste-code') {
+    modal = { type: 'code-paste' };
+    render();
+    $('#code-input')?.focus();
+  }
+  if (a === 'read-code')
+    decodeProgress($('#code-input').value).then(
+      progress => {
+        modal = { type: 'restore', progress };
+        render();
+      },
+      err => toast(err.message),
+    );
   if (a === 'retry-save') retrySave();
   if (a === 'export') exportSave();
   if (a === 'import') $('#import-file').click();
@@ -1019,7 +1154,7 @@ document.addEventListener('change', async e => {
 });
 for (const type of ['paste', 'drop'])
   document.addEventListener(type, e => {
-    if (view === 'session' && !result) {
+    if (view === 'session' && !result && !modal) {
       e.preventDefault();
       toast('用自己的双手，一点点输入就好。');
     }
@@ -1053,7 +1188,11 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Tab' && (modal || (s?.paused && view === 'session'))) {
-    const nodes = [...document.querySelectorAll('.modal button:not([disabled]),.modal input,.modal select')];
+    const nodes = [
+      ...document.querySelectorAll(
+        '.modal button:not([disabled]),.modal input,.modal select,.modal textarea',
+      ),
+    ];
     if (nodes.length) {
       const first = nodes[0],
         last = nodes.at(-1);
@@ -1101,7 +1240,8 @@ document.addEventListener('keydown', e => {
         s.editText = '';
         if (s.task >= s.tasks.length) finish();
         else {
-          render();
+          sfx('task');
+          refreshTask();
           draft();
         }
       } else {
@@ -1110,6 +1250,7 @@ document.addEventListener('keydown', e => {
           Math.max(0, current().text.length - value.length);
         s.mistakes += Math.max(1, mismatch);
         s.feedback = 'wrong';
+        sfx('wrong');
         $('#instruction').textContent = '再看看大小写、空格和标点。用退格改一改。';
       }
     }
@@ -1117,6 +1258,7 @@ document.addEventListener('keydown', e => {
   }
   if (l.ime || e.isComposing || e.key === 'Process') return;
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  s.caps = !!e.getModifierState?.('CapsLock') && /^[a-z]$/i.test(e.key);
   if (e.key.length === 1) {
     e.preventDefault();
     if (!/^[ -~]$/.test(e.key)) {
