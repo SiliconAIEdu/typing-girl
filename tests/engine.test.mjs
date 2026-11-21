@@ -1,26 +1,233 @@
-import test from 'node:test';import assert from 'node:assert/strict';import{fresh,makeTasks,matchInput,complete,draw,parseProgress,dayKey,statusFor,completionReward,effortUnits,recommendation,nextLesson,requiredKeyLesson,gateOpen}from'../src/engine.js';import{KEY_LESSONS,ENGLISH_LESSONS,CHINESE_LESSONS,ENGLISH_UNITS,LESSONS,CARDS}from'../src/content.js';import{wordsFor}from'../src/drills.js';
-const rec=(extra={})=>({runId:crypto.randomUUID(),lessonId:KEY_LESSONS[0].id,title:'F/J',date:'2026-11-17T12:00:00Z',accuracy:100,correct:20,mistakes:0,seconds:60,cpm:20,errors:{},hints:false,physical:true,finished:true,...extra});
-test('same seed reproducible; new attempts vary, keys stay in lesson scope',()=>{for(const l of KEY_LESSONS){const a=makeTasks(l,fresh(),1),b=makeTasks(l,fresh(),2);assert.deepEqual(a,makeTasks(l,fresh(),1));assert.notDeepEqual(a,b);if(!l.caseSensitive)assert.ok(a.every(t=>[...t.text].every(c=>l.keys.includes(c))));}});
-test('rewards scale with correct keys; replay never double-pays; next day repeats earn base and accuracy',()=>{let p=fresh();for(let i=0;i<3;i++)p=complete(p,rec({lessonId:KEY_LESSONS[i].id,correct:150})).progress;assert.equal(p.diamonds,3*(15+5+10)+15);const r=rec(),a=complete(p,r);assert.equal(a.reward,0);assert.equal(complete(a.progress,r).duplicate,true);assert.equal(complete(a.progress,rec({date:'2026-11-18T12:00:00Z',correct:150})).reward,20);});
-test('poor accuracy does not imply mastery; two independent checks do',()=>{let p=complete(fresh(),rec({accuracy:50})).progress;assert.equal(statusFor(p,KEY_LESSONS[0].id),'练习中');p=complete(p,rec({hints:true})).progress;assert.equal(p.skills[KEY_LESSONS[0].id].stable,0);p=complete(p,rec()).progress;p=complete(p,rec()).progress;assert.equal(statusFor(p,KEY_LESSONS[0].id),'已熟练');});
-test('assisted input and unfinished attempt never earn or master',()=>{for(const x of [{physical:false},{finished:false},{correct:0}]){const a=complete(fresh(),rec(x));assert.equal(a.reward,0);assert.equal(a.progress.skills[KEY_LESSONS[0].id].stable,0);}});
-test('capital letters are enforced in sentences',()=>{const l=ENGLISH_LESSONS.find(x=>x.mode==='sentences');assert.deepEqual(matchInput('We',0,'we',l),{matched:0,wrong:true});assert.equal(matchInput('We',0,'We',l).matched,2);});
-test('Chinese IME batch accepts prefix only; normalizes punctuation',()=>{assert.deepEqual(matchInput('小猫。',0,'小猫.',{ime:true}),{matched:3,wrong:false});assert.deepEqual(matchInput('小猫',0,'小狗',{ime:true}),{matched:1,wrong:true});});
-test('story preserves ordering and alternates only after completion',()=>{const l=ENGLISH_LESSONS.find(x=>x.mode==='story'),p=fresh();const a=makeTasks(l,p,1),b=makeTasks(l,p,9);assert.deepEqual(a,b);p.storySeen[l.id]=1;assert.notDeepEqual(a,makeTasks(l,p,1));assert.ok(a.at(-1).question);});
-test('all lessons generate nonempty tasks; story translations and answers complete',()=>{assert.equal(new Set(LESSONS.map(l=>l.id)).size,LESSONS.length);for(const l of LESSONS){const tasks=makeTasks(l,fresh(),321);assert.ok(tasks.length>0);assert.ok(tasks.every(t=>t.text.length>0));}for(const u of ENGLISH_UNITS)for(const s of u.stories){assert.equal(s.text.length,s.translation.length);assert.ok(s.answer>=0&&s.answer<s.options.length);assert.ok(s.text.every(t=>/^[\x20-\x7E]+$/.test(t)));}});
-test('each pool yields exactly 12 different cards, charges once, never crosses tiers',()=>{for(const tier of[1,2,3]){let p=fresh();p.diamonds=10000;for(let i=0;i<12;i++){const a=draw(p,tier,.41);assert.equal(a.card.tier,tier);assert.equal(a.progress.diamonds,p.diamonds-[30,90,180][tier-1]);p=a.progress;}assert.equal(Object.keys(p.cards).length,12);assert.throws(()=>draw(p,tier),/集齐/);}});
-test('insufficient balance does not mutate progress',()=>{const p=fresh(),snapshot=JSON.stringify(p);assert.throws(()=>draw(p,3),/不够/);assert.equal(JSON.stringify(p),snapshot);});
-test('backup roundtrip includes ledger, skills, cards, daily claims; rejects malformed data',()=>{let p=complete(fresh(),rec({correct:150,hintedKeys:30})).progress;p=draw(p,1,.2).progress;assert.deepEqual(parseProgress(JSON.stringify(p)),p);assert.throws(()=>parseProgress({...p,diamonds:-1}));assert.throws(()=>parseProgress({...p,cards:{bad:{date:'x'}}}));assert.throws(()=>parseProgress({...p,skills:{x:{}}}));});
-test('Beijing reset boundary is consistent',()=>{assert.equal(dayKey(new Date('2026-11-17T15:59:59Z')),'2026-11-17');assert.equal(dayKey(new Date('2026-11-17T16:00:00Z')),'2026-11-18');});
-test('36 cards have unique identifiers and valid atlas positions',()=>{assert.equal(CARDS.length,36);assert.equal(new Set(CARDS.map(c=>c.id)).size,36);assert.ok(CARDS.every(c=>c.index>=0&&c.index<12));});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  fresh,
+  makeTasks,
+  matchInput,
+  complete,
+  draw,
+  parseProgress,
+  dayKey,
+  statusFor,
+  completionReward,
+  effortUnits,
+  recommendation,
+  nextLesson,
+  requiredKeyLesson,
+  gateOpen,
+} from '../src/engine.js';
+import {
+  KEY_LESSONS,
+  ENGLISH_LESSONS,
+  CHINESE_LESSONS,
+  ENGLISH_UNITS,
+  LESSONS,
+  CARDS,
+} from '../src/content.js';
+import { wordsFor } from '../src/drills.js';
+const rec = (extra = {}) => ({
+  runId: crypto.randomUUID(),
+  lessonId: KEY_LESSONS[0].id,
+  title: 'F/J',
+  date: '2026-11-17T12:00:00Z',
+  accuracy: 100,
+  correct: 20,
+  mistakes: 0,
+  seconds: 60,
+  cpm: 20,
+  errors: {},
+  hints: false,
+  physical: true,
+  finished: true,
+  ...extra,
+});
+test('same seed reproducible; new attempts vary, keys stay in lesson scope', () => {
+  for (const l of KEY_LESSONS) {
+    const a = makeTasks(l, fresh(), 1),
+      b = makeTasks(l, fresh(), 2);
+    assert.deepEqual(a, makeTasks(l, fresh(), 1));
+    assert.notDeepEqual(a, b);
+    if (!l.caseSensitive) assert.ok(a.every(t => [...t.text].every(c => l.keys.includes(c))));
+  }
+});
+test('rewards scale with correct keys; replay never double-pays; next day repeats earn base and accuracy', () => {
+  let p = fresh();
+  for (let i = 0; i < 3; i++) p = complete(p, rec({ lessonId: KEY_LESSONS[i].id, correct: 150 })).progress;
+  assert.equal(p.diamonds, 3 * (15 + 5 + 10) + 15);
+  const r = rec(),
+    a = complete(p, r);
+  assert.equal(a.reward, 0);
+  assert.equal(complete(a.progress, r).duplicate, true);
+  assert.equal(complete(a.progress, rec({ date: '2026-11-18T12:00:00Z', correct: 150 })).reward, 20);
+});
+test('poor accuracy does not imply mastery; two independent checks do', () => {
+  let p = complete(fresh(), rec({ accuracy: 50 })).progress;
+  assert.equal(statusFor(p, KEY_LESSONS[0].id), '练习中');
+  p = complete(p, rec({ hints: true })).progress;
+  assert.equal(p.skills[KEY_LESSONS[0].id].stable, 0);
+  p = complete(p, rec()).progress;
+  p = complete(p, rec()).progress;
+  assert.equal(statusFor(p, KEY_LESSONS[0].id), '已熟练');
+});
+test('assisted input and unfinished attempt never earn or master', () => {
+  for (const x of [{ physical: false }, { finished: false }, { correct: 0 }]) {
+    const a = complete(fresh(), rec(x));
+    assert.equal(a.reward, 0);
+    assert.equal(a.progress.skills[KEY_LESSONS[0].id].stable, 0);
+  }
+});
+test('capital letters are enforced in sentences', () => {
+  const l = ENGLISH_LESSONS.find(x => x.mode === 'sentences');
+  assert.deepEqual(matchInput('We', 0, 'we', l), { matched: 0, wrong: true });
+  assert.equal(matchInput('We', 0, 'We', l).matched, 2);
+});
+test('Chinese IME batch accepts prefix only; normalizes punctuation', () => {
+  assert.deepEqual(matchInput('小猫。', 0, '小猫.', { ime: true }), { matched: 3, wrong: false });
+  assert.deepEqual(matchInput('小猫', 0, '小狗', { ime: true }), { matched: 1, wrong: true });
+});
+test('story preserves ordering and alternates only after completion', () => {
+  const l = ENGLISH_LESSONS.find(x => x.mode === 'story'),
+    p = fresh();
+  const a = makeTasks(l, p, 1),
+    b = makeTasks(l, p, 9);
+  assert.deepEqual(a, b);
+  p.storySeen[l.id] = 1;
+  assert.notDeepEqual(a, makeTasks(l, p, 1));
+  assert.ok(a.at(-1).question);
+});
+test('all lessons generate nonempty tasks; story translations and answers complete', () => {
+  assert.equal(new Set(LESSONS.map(l => l.id)).size, LESSONS.length);
+  for (const l of LESSONS) {
+    const tasks = makeTasks(l, fresh(), 321);
+    assert.ok(tasks.length > 0);
+    assert.ok(tasks.every(t => t.text.length > 0));
+  }
+  for (const u of ENGLISH_UNITS)
+    for (const s of u.stories) {
+      assert.equal(s.text.length, s.translation.length);
+      assert.ok(s.answer >= 0 && s.answer < s.options.length);
+      assert.ok(s.text.every(t => /^[\x20-\x7E]+$/.test(t)));
+    }
+});
+test('each pool yields exactly 12 different cards, charges once, never crosses tiers', () => {
+  for (const tier of [1, 2, 3]) {
+    let p = fresh();
+    p.diamonds = 10000;
+    for (let i = 0; i < 12; i++) {
+      const a = draw(p, tier, 0.41);
+      assert.equal(a.card.tier, tier);
+      assert.equal(a.progress.diamonds, p.diamonds - [30, 90, 180][tier - 1]);
+      p = a.progress;
+    }
+    assert.equal(Object.keys(p.cards).length, 12);
+    assert.throws(() => draw(p, tier), /集齐/);
+  }
+});
+test('insufficient balance does not mutate progress', () => {
+  const p = fresh(),
+    snapshot = JSON.stringify(p);
+  assert.throws(() => draw(p, 3), /不够/);
+  assert.equal(JSON.stringify(p), snapshot);
+});
+test('backup roundtrip includes ledger, skills, cards, daily claims; rejects malformed data', () => {
+  let p = complete(fresh(), rec({ correct: 150, hintedKeys: 30 })).progress;
+  p = draw(p, 1, 0.2).progress;
+  assert.deepEqual(parseProgress(JSON.stringify(p)), p);
+  assert.throws(() => parseProgress({ ...p, diamonds: -1 }));
+  assert.throws(() => parseProgress({ ...p, cards: { bad: { date: 'x' } } }));
+  assert.throws(() => parseProgress({ ...p, skills: { x: {} } }));
+});
+test('Beijing reset boundary is consistent', () => {
+  assert.equal(dayKey(new Date('2026-11-17T15:59:59Z')), '2026-11-17');
+  assert.equal(dayKey(new Date('2026-11-17T16:00:00Z')), '2026-11-18');
+});
+test('36 cards have unique identifiers and valid atlas positions', () => {
+  assert.equal(CARDS.length, 36);
+  assert.equal(new Set(CARDS.map(c => c.id)).size, 36);
+  assert.ok(CARDS.every(c => c.index >= 0 && c.index < 12));
+});
 
-test('every new key appears in every lesson variant',()=>{for(const l of KEY_LESSONS.filter(l=>!l.caseSensitive))for(let seed=0;seed<30;seed++){const text=makeTasks(l,fresh(),seed).map(t=>t.text).join('');for(const key of l.newKeys)assert.ok(text.includes(key),l.id+': '+key);}});
+test('every new key appears in every lesson variant', () => {
+  for (const l of KEY_LESSONS.filter(l => !l.caseSensitive))
+    for (let seed = 0; seed < 30; seed++) {
+      const text = makeTasks(l, fresh(), seed)
+        .map(t => t.text)
+        .join('');
+      for (const key of l.newKeys) assert.ok(text.includes(key), l.id + ': ' + key);
+    }
+});
 
-test('keyboard lessons are long enough to practise and stay within learned keys',()=>{for(const l of KEY_LESSONS)for(const seed of [1,7,99]){const tasks=makeTasks(l,fresh(),seed),total=tasks.reduce((n,t)=>n+t.text.length,0);assert.ok(total>=100&&total<=220,l.id+': '+total);assert.ok(tasks.every(t=>t.text.length<=14),l.id);}});
-test('real words appear once enough letters are learned, using only those letters',()=>{const l=KEY_LESSONS.find(x=>x.id==='key-home-a');const words=makeTasks(l,fresh(),3).filter(t=>t.note==='打出真正的单词');assert.ok(words.length>=3);assert.ok(words.every(t=>/^[asdfjkl; ]+$/.test(t.text)));assert.deepEqual(wordsFor([...'fj']),[]);});
-test('numbers, punctuation and capitals lessons practise their keys in context',()=>{const by=id=>makeTasks(KEY_LESSONS.find(l=>l.id===id),fresh(),5).map(t=>t.text).join(' ');const n=by('key-numbers');for(const d of '0123456789')assert.ok(n.split(d).length-1>=3,d);const pu=by('key-punctuation');assert.match(pu,/[a-z], [a-z]/);assert.match(pu,/[a-z]\?/);const caps=by('key-capitals');for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')assert.ok(caps.includes(c),c);});
-test('completion reward follows effort: short drills earn less than long articles',()=>{assert.equal(completionReward(24),5);assert.equal(completionReward(150),15);assert.equal(completionReward(700),30);assert.equal(effortUnits({correct:40,ime:true}),120);});
-test('hint share decides mastery: a few peeks are fine, full guidance is not',()=>{let p=fresh();p=complete(p,rec({correct:100,hintedKeys:10})).progress;p=complete(p,rec({correct:100,hintedKeys:15})).progress;assert.equal(statusFor(p,KEY_LESSONS[0].id),'已熟练');let q=complete(fresh(),rec({correct:100,hintedKeys:60})).progress;assert.equal(q.skills[KEY_LESSONS[0].id].stable,0);});
-test('passing a lesson with hints moves the recommendation forward',()=>{let p=complete(fresh(),rec({hints:true,hintedKeys:20,accuracy:92})).progress;assert.equal(recommendation(p).id,KEY_LESSONS[1].id);p=complete(p,rec({lessonId:KEY_LESSONS[1].id,accuracy:60})).progress;assert.equal(recommendation(p).id,KEY_LESSONS[1].id);});
-test('next lesson follows each track',()=>{const p=fresh();assert.equal(nextLesson(KEY_LESSONS[0],p).id,KEY_LESSONS[1].id);const w=ENGLISH_LESSONS[0];assert.equal(nextLesson(w,p).mode,'sentences');assert.equal(nextLesson(ENGLISH_LESSONS[2],p).id,ENGLISH_LESSONS[3].id);assert.equal(nextLesson(CHINESE_LESSONS[0],p).id,CHINESE_LESSONS[1].id);});
-test('language lessons softly wait for the keyboard lessons they need',()=>{const s=ENGLISH_LESSONS.find(l=>l.mode==='sentences');assert.equal(requiredKeyLesson(s).id,'key-capitals');const p=fresh();assert.equal(gateOpen(p,s),false);assert.equal(gateOpen({...p,settings:{...p.settings,confident:true}},s),true);for(const l of KEY_LESSONS)p.skills[l.id]={stable:0,best:85,visits:1};assert.equal(gateOpen(p,s),true);assert.equal(requiredKeyLesson(KEY_LESSONS[0]),null);});
+test('keyboard lessons are long enough to practise and stay within learned keys', () => {
+  for (const l of KEY_LESSONS)
+    for (const seed of [1, 7, 99]) {
+      const tasks = makeTasks(l, fresh(), seed),
+        total = tasks.reduce((n, t) => n + t.text.length, 0);
+      assert.ok(total >= 100 && total <= 220, l.id + ': ' + total);
+      assert.ok(
+        tasks.every(t => t.text.length <= 14),
+        l.id,
+      );
+    }
+});
+test('real words appear once enough letters are learned, using only those letters', () => {
+  const l = KEY_LESSONS.find(x => x.id === 'key-home-a');
+  const words = makeTasks(l, fresh(), 3).filter(t => t.note === '打出真正的单词');
+  assert.ok(words.length >= 3);
+  assert.ok(words.every(t => /^[asdfjkl; ]+$/.test(t.text)));
+  assert.deepEqual(wordsFor([...'fj']), []);
+});
+test('numbers, punctuation and capitals lessons practise their keys in context', () => {
+  const by = id =>
+    makeTasks(
+      KEY_LESSONS.find(l => l.id === id),
+      fresh(),
+      5,
+    )
+      .map(t => t.text)
+      .join(' ');
+  const n = by('key-numbers');
+  for (const d of '0123456789') assert.ok(n.split(d).length - 1 >= 3, d);
+  const pu = by('key-punctuation');
+  assert.match(pu, /[a-z], [a-z]/);
+  assert.match(pu, /[a-z]\?/);
+  const caps = by('key-capitals');
+  for (const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') assert.ok(caps.includes(c), c);
+});
+test('completion reward follows effort: short drills earn less than long articles', () => {
+  assert.equal(completionReward(24), 5);
+  assert.equal(completionReward(150), 15);
+  assert.equal(completionReward(700), 30);
+  assert.equal(effortUnits({ correct: 40, ime: true }), 120);
+});
+test('hint share decides mastery: a few peeks are fine, full guidance is not', () => {
+  let p = fresh();
+  p = complete(p, rec({ correct: 100, hintedKeys: 10 })).progress;
+  p = complete(p, rec({ correct: 100, hintedKeys: 15 })).progress;
+  assert.equal(statusFor(p, KEY_LESSONS[0].id), '已熟练');
+  let q = complete(fresh(), rec({ correct: 100, hintedKeys: 60 })).progress;
+  assert.equal(q.skills[KEY_LESSONS[0].id].stable, 0);
+});
+test('passing a lesson with hints moves the recommendation forward', () => {
+  let p = complete(fresh(), rec({ hints: true, hintedKeys: 20, accuracy: 92 })).progress;
+  assert.equal(recommendation(p).id, KEY_LESSONS[1].id);
+  p = complete(p, rec({ lessonId: KEY_LESSONS[1].id, accuracy: 60 })).progress;
+  assert.equal(recommendation(p).id, KEY_LESSONS[1].id);
+});
+test('next lesson follows each track', () => {
+  const p = fresh();
+  assert.equal(nextLesson(KEY_LESSONS[0], p).id, KEY_LESSONS[1].id);
+  const w = ENGLISH_LESSONS[0];
+  assert.equal(nextLesson(w, p).mode, 'sentences');
+  assert.equal(nextLesson(ENGLISH_LESSONS[2], p).id, ENGLISH_LESSONS[3].id);
+  assert.equal(nextLesson(CHINESE_LESSONS[0], p).id, CHINESE_LESSONS[1].id);
+});
+test('language lessons softly wait for the keyboard lessons they need', () => {
+  const s = ENGLISH_LESSONS.find(l => l.mode === 'sentences');
+  assert.equal(requiredKeyLesson(s).id, 'key-capitals');
+  const p = fresh();
+  assert.equal(gateOpen(p, s), false);
+  assert.equal(gateOpen({ ...p, settings: { ...p.settings, confident: true } }, s), true);
+  for (const l of KEY_LESSONS) p.skills[l.id] = { stable: 0, best: 85, visits: 1 };
+  assert.equal(gateOpen(p, s), true);
+  assert.equal(requiredKeyLesson(KEY_LESSONS[0]), null);
+});

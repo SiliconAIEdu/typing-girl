@@ -1,0 +1,4 @@
+src/curriculum-data.js
+src/heart-manifest.js
+src/*.json
+dist/

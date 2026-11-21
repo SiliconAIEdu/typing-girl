@@ -1,1 +1,5 @@
-import fs from 'node:fs';fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist');for(const f of ['index.html','src','public'])fs.cpSync(f,`dist/${f}`,{recursive:true});console.log('Static site ready: dist/ (relative URLs support any GitHub Pages repository name)');
+import fs from 'node:fs';
+fs.rmSync('dist', { recursive: true, force: true });
+fs.mkdirSync('dist');
+for (const f of ['index.html', 'src', 'public']) fs.cpSync(f, `dist/${f}`, { recursive: true });
+console.log('Static site ready: dist/ (relative URLs support any GitHub Pages repository name)');
